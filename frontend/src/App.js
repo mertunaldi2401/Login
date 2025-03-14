@@ -1,34 +1,27 @@
-import React, { useContext } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import { AuthContext } from './AuthContext';
+import React from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+import Home from './Home';
 import Login from './Login';
 import Register from './Register';
-import Welcome from './Welcome';
+import Admin from './Admin';
+import Products from './Products'; // <--- Import the new Products page
 
 function App() {
-  const { auth, logout } = useContext(AuthContext);
-  const isAuthenticated = auth.user != null;
-
   return (
     <div>
-      <nav style={{ padding: '1em' }}>
-        {isAuthenticated ? (
-          <>
-            <span style={{ marginRight: '1em' }}>Logged in as <b>{auth.user}</b></span>
-            <button onClick={logout}>Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" style={{ marginRight: '1em' }}>Login</Link>
-            <Link to="/register">Register</Link>
-          </>
-        )}
+      <nav style={{ padding: '1rem', background: '#f4f4f4' }}>
+        <Link to="/" style={{ marginRight: '1rem' }}>Home</Link>
+        <Link to="/products" style={{ marginRight: '1rem' }}>Products</Link>
+        <Link to="/login" style={{ marginRight: '1rem' }}>Login</Link>
+        <Link to="/register">Register</Link>
       </nav>
 
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Welcome /> : <Navigate to="/login" />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/products" element={<Products />} />   {/* Add this route */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>
   );
