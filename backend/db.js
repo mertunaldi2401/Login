@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('dotenv').config(); // Add this if not already present
 
 // Replace this with your MongoDB URI (we can move it to a .env file later)
 const mongoURI = 'mongodb+srv://onuroguncu:Onur2003**@308cluster.oxpgd.mongodb.net/30836db?retryWrites=true&w=majority&appName=308Cluster';
