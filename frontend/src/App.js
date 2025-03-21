@@ -4,12 +4,13 @@ import { AuthContext } from './AuthContext';
 import MainPage from './MainPage';
 import Login from './Login';
 import Register from './Register';
+import ProductDetail from './ProductDetail';
+import Cart from './Cart'; // <-- New import
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
   const isAuthenticated = auth.user !== null;
 
-  // Navbar stilleri
   const navStyle = {
     display: 'flex',
     justifyContent: 'space-between',
@@ -51,8 +52,6 @@ function App() {
     border: '1px solid #d50000'
   };
 
-  // Hover efektini inline stillerde yapmak zor olduğu için
-  // basit bir onMouseEnter/onMouseLeave ile örnek
   const handleMouseEnter = (e) => {
     Object.assign(e.target.style, linkButtonHover);
   };
@@ -63,12 +62,10 @@ function App() {
   return (
     <div>
       <nav style={navStyle}>
-        {/* Sol tarafta Mağaza ismi */}
         <Link to="/" style={logoStyle}>
           THOR'S MIGHTY GUITAR STORE
         </Link>
 
-        {/* Sağ tarafta Login/Register veya Kullanıcı Bilgisi */}
         <div>
           {isAuthenticated ? (
             <>
@@ -111,6 +108,10 @@ function App() {
         <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* Product Detail route */}
+        <Route path="/product/:id" element={<ProductDetail />} />
+        {/* Cart route */}
+        <Route path="/cart" element={<Cart />} />
       </Routes>
     </div>
   );

@@ -1,15 +1,17 @@
+// Products.js
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-// 1. Ürün Listesi
+// 1. Ürün Listesi (now with price)
 const products = [
-  // Gitar Ürünleri
   {
     id: 1,
     name: 'Fender Stratocaster',
     model: 'Strat Classic',
     serial: 'FND-002',
     category: 'Guitars',
-    image: '/images/1228000110250840_1.jpg.webp'
+    image: '/images/1228000110250840_1.jpg.webp',
+    price: 1299.99
   },
   {
     id: 4,
@@ -17,7 +19,8 @@ const products = [
     model: '7 Strings',
     serial: 'GTR-001',
     category: 'Guitars',
-    image: '/images/epiphone-m-28833_1.jpg'
+    image: '/images/epiphone-m-28833_1.jpg',
+    price: 899.99
   },
   {
     id: 5,
@@ -25,16 +28,17 @@ const products = [
     model: 'TOD10',
     serial: 'GTR-002',
     category: 'Guitars',
-    image: '/images/ibanez-tod10.jpg'
+    image: '/images/ibanez-tod10.jpg',
+    price: 1499.99
   },
-  // Efekt Pedalları
   {
     id: 2,
     name: 'Nano Cortex',
     model: 'Nano Cortex',
     serial: 'EFF-002',
     category: 'Effects',
-    image: '/images/19425051_800.jpg'
+    image: '/images/19425051_800.jpg',
+    price: 299.99
   },
   {
     id: 3,
@@ -42,16 +46,17 @@ const products = [
     model: 'Quad Cortex',
     serial: 'EFF-001',
     category: 'Effects',
-    image: '/images/15848351_800.jpg'
+    image: '/images/15848351_800.jpg',
+    price: 1599.99
   },
-  // Teller
   {
     id: 6,
     name: 'Ernie Ball Paradigm',
     model: 'Paradigm Strings',
     serial: 'STR-001',
     category: 'Strings',
-    image: '/images/images-2.jpeg'
+    image: '/images/images-2.jpeg',
+    price: 19.99
   },
   {
     id: 7,
@@ -59,23 +64,23 @@ const products = [
     model: 'Regular Slinky',
     serial: 'STR-002',
     category: 'Strings',
-    image: '/images/P02221_1.jpg.webp'
+    image: '/images/P02221_1.jpg.webp',
+    price: 9.99
   }
 ];
 
 // 2. Kategoriye göre gradient stilleri
 const categoryStyles = {
   Guitars: {
-    // Siyah ve kırmızı arasında geçiş
     background: 'linear-gradient(45deg, #000000, #ff0000)',
     color: '#fff'
   },
   Effects: {
-    background: 'linear-gradient(45deg, #0f2027, #203a43)', // Koyu teal tonları
+    background: 'linear-gradient(45deg, #0f2027, #203a43)',
     color: '#fff'
   },
   Strings: {
-    background: 'linear-gradient(45deg, #232526, #414345)', // Koyu gri tonları
+    background: 'linear-gradient(45deg, #232526, #414345)',
     color: '#fff'
   }
 };
@@ -94,7 +99,7 @@ function Products() {
   // Stil Tanımları
   const containerStyle = {
     padding: '20px',
-    fontFamily: '"Metal Mania", cursive', // Google Fonts'tan ekleyebilirsiniz
+    fontFamily: '"Metal Mania", cursive',
     color: '#fff'
   };
 
@@ -132,11 +137,12 @@ function Products() {
     padding: '15px',
     width: '220px',
     textAlign: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Koyu, şeffaf zemin
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     color: '#fff',
     boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)',
     borderRadius: '6px',
-    transition: 'transform 0.2s ease-in-out'
+    transition: 'transform 0.2s ease-in-out',
+    textDecoration: 'none'
   };
 
   const productImageStyle = {
@@ -154,7 +160,7 @@ function Products() {
   const productModelStyle = {
     marginBottom: '5px',
     fontWeight: 'bold',
-    color: '#ffcc00' // Altın rengi vurgu
+    color: '#ffcc00'
   };
 
   const productSerialStyle = {
@@ -166,7 +172,6 @@ function Products() {
     <div style={containerStyle}>
       <h1 style={mainTitleStyle}>THOR'S EPIC COLLECTION</h1>
       {Object.keys(groupedProducts).map((category) => {
-        // Kategoriye ait özel stil varsa uygula, yoksa varsayılan
         const catStyle = categoryStyles[category] || {
           background: '#333',
           color: '#fff'
@@ -183,22 +188,27 @@ function Products() {
             <h2 style={categoryTitleStyle}>{category}</h2>
             <div style={productsWrapperStyle}>
               {groupedProducts[category].map((product) => (
-                <div
+                <Link
                   key={product.id}
-                  style={productCardStyle}
-                  // Hover efekti: hafif büyütme
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  to={`/product/${product.id}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    style={productImageStyle}
-                  />
-                  <h3 style={productNameStyle}>{product.name}</h3>
-                  <p style={productModelStyle}>Model: {product.model}</p>
-                  <p style={productSerialStyle}>Serial: {product.serial}</p>
-                </div>
+                  <div
+                    style={productCardStyle}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      style={productImageStyle}
+                    />
+                    <h3 style={productNameStyle}>{product.name}</h3>
+                    <p style={productModelStyle}>Model: {product.model}</p>
+                    <p style={productSerialStyle}>Serial: {product.serial}</p>
+                    <p style={productSerialStyle}>Price: ${product.price.toFixed(2)}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
