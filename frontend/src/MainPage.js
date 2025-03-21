@@ -6,52 +6,49 @@ function MainPage() {
   const { auth } = useContext(AuthContext);
   const username = auth.user ? auth.user : 'Guest';
 
+  const pageStyle = {
+    // Koyu bir metalik gradient
+    background: 'linear-gradient(135deg, #2a2a2a, #111)',
+    minHeight: '100vh',
+    padding: '3rem 2rem',
+    color: '#fff',
+    fontFamily: '"Metal Mania", cursive',
+    position: 'relative'
+  };
+
+  const headerStyle = {
+    textAlign: 'center',
+    marginBottom: '3rem',
+    textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
+  };
+
+  const titleStyle = {
+    fontSize: '4rem',
+    margin: 0,
+    color: '#d50000'
+  };
+
+  const subtitleStyle = {
+    fontSize: '1.5rem',
+    marginTop: '1rem'
+  };
+
+  const productsContainerStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Yarı saydam kutu
+    padding: '2rem',
+    borderRadius: '8px',
+    boxShadow: '0 0 15px rgba(0,0,0,0.5)'
+  };
+
   return (
-    <div
-      style={{
-        // Canlı renk geçişi (gradient) arka plan
-        background: 'linear-gradient(45deg, #fc466b, #3f5efb)',
-        minHeight: '100vh',
-        padding: '2rem',
-        color: '#fff',
-        fontFamily: "'Bebas Neue', sans-serif",
-        // Yukarıdaki fontu kullanmak için Google Fonts veya benzeri bir kaynaktan ekleyin
-      }}
-    >
-      {/* Sayfa Başlığı */}
-      <header style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1
-          style={{
-            fontSize: '4rem',
-            margin: 0,
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          Rock Your World!
-        </h1>
-        <p
-          style={{
-            fontSize: '1.5rem',
-            marginTop: '0.5rem',
-            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          Welcome, {username}! Explore our killer collection of guitars, effects, and more.
+    <div style={pageStyle}>
+      <header style={headerStyle}>
+        <h1 style={titleStyle}>Rock Your World!</h1>
+        <p style={subtitleStyle}>
+          Welcome, {username}! Unleash the riffs with our epic collection of guitars and effects.
         </p>
       </header>
-
-      {/* Ürünler Bölümü (yarı saydam kutu) */}
-      <section
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          backgroundColor: 'rgba(255, 255, 255, 0.85)',
-          borderRadius: '8px',
-          padding: '2rem',
-          color: '#333',
-          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.3)'
-        }}
-      >
+      <section style={productsContainerStyle}>
         <Products />
       </section>
     </div>
