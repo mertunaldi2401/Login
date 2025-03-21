@@ -3,16 +3,9 @@ import React from 'react';
 // 1. Ürün Listesi
 const products = [
   // Gitar Ürünleri
+  
   {
     id: 1,
-    name: 'Ibanez RG Series',
-    model: 'RG550',
-    serial: 'IBZ-001',
-    category: 'Guitars',
-    image: '/images/ps_main_eg_rg_genesiscollection_en.png'
-  },
-  {
-    id: 2,
     name: 'Fender Stratocaster',
     model: 'Strat Classic',
     serial: 'FND-002',
@@ -20,7 +13,7 @@ const products = [
     image: '/images/1228000110250840_1.jpg.webp'
   },
   {
-    id: 5,
+    id: 4,
     name: 'Epiphone Matt Heafy Signature',
     model: '7 Strings',
     serial: 'GTR-001',
@@ -28,7 +21,7 @@ const products = [
     image: '/images/epiphone-m-28833_1.jpg'
   },
   {
-    id: 6,
+    id: 5,
     name: 'Ibanez Tim Henson Signature',
     model: 'TOD10',
     serial: 'GTR-002',
@@ -54,7 +47,7 @@ const products = [
   },
   // Teller
   {
-    id: 7,
+    id: 6,
     name: 'Ernie Ball Paradigm',
     model: 'Paradigm Strings',
     serial: 'STR-001',
@@ -62,7 +55,7 @@ const products = [
     image: '/images/images-2.jpeg'
   },
   {
-    id: 8,
+    id: 7,
     name: 'Ernie Ball Regular Slinky',
     model: 'Regular Slinky',
     serial: 'STR-002',
