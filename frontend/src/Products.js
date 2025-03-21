@@ -3,7 +3,6 @@ import React from 'react';
 // 1. Ürün Listesi
 const products = [
   // Gitar Ürünleri
-  
   {
     id: 1,
     name: 'Fender Stratocaster',
@@ -30,20 +29,20 @@ const products = [
   },
   // Efekt Pedalları
   {
+    id: 2,
+    name: 'Nano Cortex',
+    model: 'Nano Cortex',
+    serial: 'EFF-002',
+    category: 'Effects',
+    image: '/images/19425051_800.jpg'
+  },
+  {
     id: 3,
     name: 'Neural DSP Quad Cortex',
     model: 'Quad Cortex',
     serial: 'EFF-001',
     category: 'Effects',
     image: '/images/15848351_800.jpg'
-  },
-  {
-    id: 4,
-    name: 'Nano Cortex',
-    model: 'Nano Cortex',
-    serial: 'EFF-002',
-    category: 'Effects',
-    image: '/images/19425051_800.jpg'
   },
   // Teller
   {
@@ -64,23 +63,23 @@ const products = [
   }
 ];
 
-// 2. Kategoriye göre renk stilleri (gradient)
+// 2. Kategoriye göre gradient stilleri
 const categoryStyles = {
   Guitars: {
-    background: 'linear-gradient(45deg, #ff9966, #ff5e62)', // Turuncu-kırmızı geçiş
+    // Siyah ve kırmızı arasında geçiş
+    background: 'linear-gradient(45deg, #000000, #ff0000)',
     color: '#fff'
   },
   Effects: {
-    background: 'linear-gradient(45deg, #f6d365, #fda085)', // Sarı-turuncu geçiş
-    color: '#333'
+    background: 'linear-gradient(45deg, #0f2027, #203a43)', // Koyu teal tonları
+    color: '#fff'
   },
   Strings: {
-    background: 'linear-gradient(45deg, #a1c4fd, #c2e9fb)', // Mavi-açık mavi geçiş
-    color: '#333'
+    background: 'linear-gradient(45deg, #232526, #414345)', // Koyu gri tonları
+    color: '#fff'
   }
 };
 
-// 3. Ana Bileşen
 function Products() {
   // Ürünleri kategori bazında gruplandırma
   const groupedProducts = products.reduce((groups, product) => {
@@ -95,14 +94,16 @@ function Products() {
   // Stil Tanımları
   const containerStyle = {
     padding: '20px',
-    fontFamily: 'Arial, sans-serif'
+    fontFamily: '"Metal Mania", cursive', // Google Fonts'tan ekleyebilirsiniz
+    color: '#fff'
   };
 
   const mainTitleStyle = {
     textAlign: 'center',
     marginBottom: '30px',
-    fontSize: '2.5rem',
-    fontWeight: 'bold'
+    fontSize: '3rem',
+    fontWeight: 'bold',
+    textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
   };
 
   const categorySectionStyle = {
@@ -113,9 +114,10 @@ function Products() {
 
   const categoryTitleStyle = {
     textTransform: 'uppercase',
-    fontSize: '1.5rem',
+    fontSize: '1.8rem',
     marginBottom: '10px',
-    textAlign: 'center'
+    textAlign: 'center',
+    textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
   };
 
   const productsWrapperStyle = {
@@ -125,13 +127,14 @@ function Products() {
   };
 
   const productCardStyle = {
-    border: '1px solid rgba(0,0,0,0.1)',
+    border: '1px solid #333',
     margin: '10px',
     padding: '15px',
     width: '220px',
     textAlign: 'center',
-    backgroundColor: '#fff',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Koyu, şeffaf zemin
+    color: '#fff',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)',
     borderRadius: '6px',
     transition: 'transform 0.2s ease-in-out'
   };
@@ -145,27 +148,28 @@ function Products() {
   const productNameStyle = {
     fontSize: '1.2em',
     margin: '10px 0',
-    color: '#333'
+    color: '#fff'
   };
 
   const productModelStyle = {
     marginBottom: '5px',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#ffcc00' // Altın rengi vurgu
   };
 
   const productSerialStyle = {
-    color: '#888',
+    color: '#ccc',
     fontSize: '0.9em'
   };
 
   return (
     <div style={containerStyle}>
-      <h1 style={mainTitleStyle}>Our Colorful Collection</h1>
+      <h1 style={mainTitleStyle}>THOR'S EPIC COLLECTION</h1>
       {Object.keys(groupedProducts).map((category) => {
-        // Kategoriye ait stil varsa uygula, yoksa varsayılan
+        // Kategoriye ait özel stil varsa uygula, yoksa varsayılan
         const catStyle = categoryStyles[category] || {
-          background: '#ddd',
-          color: '#333'
+          background: '#333',
+          color: '#fff'
         };
 
         return (
@@ -182,7 +186,7 @@ function Products() {
                 <div
                   key={product.id}
                   style={productCardStyle}
-                  // Hover efekti
+                  // Hover efekti: hafif büyütme
                   onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
                   onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 >
