@@ -6,16 +6,17 @@ const products = [
     name: 'Ibanez RG Series',
     model: 'RG550',
     serial: 'IBZ-001',
-    image: '/Users/ataberkuysal/Desktop/Login/ps_main_eg_rg_genesiscollection_en.png'
+    // Resmi public/images klasörüne koyduğunuzu varsayıyoruz.
+    image: '/images/ps_main_eg_rg_genesiscollection_en.png'
   },
   {
     id: 2,
     name: 'Fender Stratocaster',
     model: 'Strat Classic',
     serial: 'FND-002',
-    image: '/Users/ataberkuysal/Desktop/Login/1228000110250840_1.jpg.webp'
+    image: '/images/1228000110250840_1.jpg.webp'
   },
-  // Add more products if needed
+  // Gerekirse daha fazla ürün ekleyebilirsiniz
 ];
 
 function Products() {
