@@ -1,5 +1,6 @@
 import React from 'react';
 
+// 1. Ürün Listesi
 const products = [
   // Gitar Ürünleri
   {
@@ -70,6 +71,23 @@ const products = [
   }
 ];
 
+// 2. Kategoriye göre renk stilleri (gradient)
+const categoryStyles = {
+  Guitars: {
+    background: 'linear-gradient(45deg, #ff9966, #ff5e62)', // Turuncu-kırmızı geçiş
+    color: '#fff'
+  },
+  Effects: {
+    background: 'linear-gradient(45deg, #f6d365, #fda085)', // Sarı-turuncu geçiş
+    color: '#333'
+  },
+  Strings: {
+    background: 'linear-gradient(45deg, #a1c4fd, #c2e9fb)', // Mavi-açık mavi geçiş
+    color: '#333'
+  }
+};
+
+// 3. Ana Bileşen
 function Products() {
   // Ürünleri kategori bazında gruplandırma
   const groupedProducts = products.reduce((groups, product) => {
@@ -81,41 +99,114 @@ function Products() {
     return groups;
   }, {});
 
+  // Stil Tanımları
+  const containerStyle = {
+    padding: '20px',
+    fontFamily: 'Arial, sans-serif'
+  };
+
+  const mainTitleStyle = {
+    textAlign: 'center',
+    marginBottom: '30px',
+    fontSize: '2.5rem',
+    fontWeight: 'bold'
+  };
+
+  const categorySectionStyle = {
+    marginBottom: '40px',
+    borderRadius: '8px',
+    padding: '10px'
+  };
+
+  const categoryTitleStyle = {
+    textTransform: 'uppercase',
+    fontSize: '1.5rem',
+    marginBottom: '10px',
+    textAlign: 'center'
+  };
+
+  const productsWrapperStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center'
+  };
+
+  const productCardStyle = {
+    border: '1px solid rgba(0,0,0,0.1)',
+    margin: '10px',
+    padding: '15px',
+    width: '220px',
+    textAlign: 'center',
+    backgroundColor: '#fff',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    borderRadius: '6px',
+    transition: 'transform 0.2s ease-in-out'
+  };
+
+  const productImageStyle = {
+    maxWidth: '100%',
+    height: 'auto',
+    borderRadius: '4px'
+  };
+
+  const productNameStyle = {
+    fontSize: '1.2em',
+    margin: '10px 0',
+    color: '#333'
+  };
+
+  const productModelStyle = {
+    marginBottom: '5px',
+    fontWeight: 'bold'
+  };
+
+  const productSerialStyle = {
+    color: '#888',
+    fontSize: '0.9em'
+  };
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Our Collection</h1>
-      {Object.keys(groupedProducts).map((category) => (
-        <div key={category} style={{ marginBottom: '40px' }}>
-          <h2 style={{ textTransform: 'uppercase', borderBottom: '2px solid #ccc', paddingBottom: '5px' }}>
-            {category}
-          </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {groupedProducts[category].map((product) => (
-              <div
-                key={product.id}
-                style={{
-                  border: '1px solid #ddd',
-                  margin: '10px',
-                  padding: '15px',
-                  width: '250px',
-                  textAlign: 'center',
-                  backgroundColor: '#fff',
-                  boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.1)'
-                }}
-              >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  style={{ maxWidth: '100%', height: 'auto', borderRadius: '5px' }}
-                />
-                <h3 style={{ fontSize: '1.2em', margin: '10px 0' }}>{product.name}</h3>
-                <p>Model: {product.model}</p>
-                <p style={{ color: '#888', fontSize: '0.9em' }}>Serial: {product.serial}</p>
-              </div>
-            ))}
+    <div style={containerStyle}>
+      <h1 style={mainTitleStyle}>Our Colorful Collection</h1>
+      {Object.keys(groupedProducts).map((category) => {
+        // Kategoriye ait stil varsa uygula, yoksa varsayılan
+        const catStyle = categoryStyles[category] || {
+          background: '#ddd',
+          color: '#333'
+        };
+
+        return (
+          <div
+            key={category}
+            style={{
+              ...categorySectionStyle,
+              ...catStyle
+            }}
+          >
+            <h2 style={categoryTitleStyle}>{category}</h2>
+            <div style={productsWrapperStyle}>
+              {groupedProducts[category].map((product) => (
+                <div
+                  key={product.id}
+                  style={productCardStyle}
+                  // Hover efekti
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={productImageStyle}
+                  />
+                  <h3 style={productNameStyle}>{product.name}</h3>
+                  <p style={productModelStyle}>Model: {product.model}</p>
+                  <p style={productSerialStyle}>Serial: {product.serial}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
