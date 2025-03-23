@@ -1,12 +1,13 @@
 // ProductDetail.js
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReviewSection from './ReviewSection';
 
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Extended mock data with price and images matching Products.js
+  // Extended mock data with price and images
   const mockProducts = [
     {
       id: 1,
@@ -66,7 +67,7 @@ function ProductDetail() {
     }
   ];
 
-  // Convert id to number if necessary (since product.id is a number above)
+  // Convert id to number
   const productId = parseInt(id, 10);
 
   // Find product by id or fallback
@@ -81,13 +82,14 @@ function ProductDetail() {
     };
 
   const addToCart = () => {
-    // Retrieve existing cart or create new
+    // Retrieve existing cart or create a new one
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart.push(product);
     localStorage.setItem('cart', JSON.stringify(cart));
     alert(`Added ${product.name} to cart!`);
   };
 
+  // Styles
   const detailContainerStyle = {
     padding: '2rem',
     color: '#fff',
@@ -121,10 +123,6 @@ function ProductDetail() {
     marginBottom: '1rem'
   };
 
-  const descriptionStyle = {
-    marginBottom: '2rem'
-  };
-
   const priceStyle = {
     fontSize: '1.2rem',
     fontWeight: 'bold',
@@ -152,9 +150,9 @@ function ProductDetail() {
     <div style={detailContainerStyle}>
       <div style={contentStyle}>
         {/* Product Image */}
-        {product.image ? (
+        {product.image && (
           <img src={product.image} alt={product.name} style={imageStyle} />
-        ) : null}
+        )}
 
         {/* Product Info */}
         <div style={infoStyle}>
@@ -165,14 +163,14 @@ function ProductDetail() {
           <button style={buttonStyle} onClick={addToCart}>
             Add to Cart
           </button>
-          <button
-            style={backButtonStyle}
-            onClick={() => navigate(-1)} // go back
-          >
+          <button style={backButtonStyle} onClick={() => navigate(-1)}>
             Go Back
           </button>
         </div>
       </div>
+
+      {/* Insert the Review Section below the product info */}
+      <ReviewSection />
     </div>
   );
 }
