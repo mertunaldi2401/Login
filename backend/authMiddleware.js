@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = 'g363308cs'; // use process.env.JWT_SECRET in production!
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -15,6 +15,7 @@ const authenticateToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
+    console.error('Token verification failed:', err);
     res.status(403).json({ message: 'Invalid or expired token.' });
   }
 };

@@ -1,25 +1,13 @@
-const jwt = require('jsonwebtoken');
+const User = require('./User');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  
-  // Expected format: Bearer <token>
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Access denied. No token provided.' });
-  }
-
+const getAllUsers = async (req, res) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // You can use this in the next middleware/routes
-    next();
+    const users = await User.find().select('-password');
+    res.json(users);
   } catch (err) {
-    console.error('Token verification failed:', err);
-    res.status(403).json({ message: 'Invalid or expired token.' });
+    console.error('Error fetching users:', err);
+    res.status(500).json({ message: 'Failed to get users' });
   }
 };
 
-module.exports = authenticateToken;
+module.exports = { getAllUsers };

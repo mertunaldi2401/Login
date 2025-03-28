@@ -1,97 +1,98 @@
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs'); // changed to bcryptjs
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const connectDB = require('./db');
 const User = require('./User');
+const Product = require('./Product');
+
 const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
+const cartRoutes = require('./cartRoutes');
+const orderRoutes = require('./orderRoutes');
+
 
 const app = express();
-const PORT = 5001; // use 5001 or another free port
-const JWT_SECRET = 'g363308cs'; // use environment variables in production!
+const PORT = 5001; 
+const JWT_SECRET = 'g363308cs'; 
 
 // Connect to MongoDB
 connectDB();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/', authRoutes);
-app.use('/', userRoutes);
 
-// Registration route
-app.post('/register', async (req, res) => {
-  const { username, password, confirmPassword } = req.body;
+// Routes 
+app.use('/auth', authRoutes);    // /auth/register, /auth/login
+app.use('/users', userRoutes);   // /users route
+app.use('/cart', cartRoutes); 
+app.use('/orders', orderRoutes);
 
-  if (!username || !password || !confirmPassword) {
-    return res.status(400).json({ message: 'All fields are required.' });
+// ============================
+// Product Routes
+// ============================
+
+// GET all products
+app.get('/products', async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.json(products);
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    res.status(500).json({ message: 'Error fetching products' });
   }
+});
 
-  if (password !== confirmPassword) {
-    return res.status(400).json({ message: 'Passwords do not match.' });
+// POST a new product
+app.post('/products', async (req, res) => {
+  const {
+    name,
+    description,
+    price,
+    stock,
+    image,
+    category,
+    brand,
+    isFeatured,
+    rating,
+    numReviews
+  } = req.body;
+
+  // validation
+  if (!name || price === undefined || stock === undefined || !category) {
+    return res.status(400).json({ message: 'Name, price, stock, and category are required.' });
   }
 
   try {
-    // Check if user already exists in MongoDB
-    const existingUser = await User.findOne({ username });
-
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists.' });
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create and save the new user
-    const newUser = new User({
-      username,
-      password: hashedPassword
+    const newProduct = new Product({
+      name,
+      description,
+      price,
+      stock,
+      image,
+      category,
+      brand,
+      isFeatured,
+      rating,
+      numReviews
     });
 
-    await newUser.save();
-
-    res.status(201).json({ message: 'User registered successfully.' });
+    await newProduct.save();
+    res.status(201).json({ message: 'Product created successfully!', product: newProduct });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ message: 'Error registering user.' });
+    console.error('Error creating product:', err);
+    res.status(500).json({
+      message: 'Error creating product',
+      error: err.message
+    });
   }
 });
 
-// Login route
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Username and password are required.' });
-  }
-
-  try {
-    // Look for the user in MongoDB
-    const user = await User.findOne({ username });
-
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid username or password.' });
-    }
-
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid username or password.' });
-    }
-
-    // Generate JWT
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-
-    res.json({ message: `Welcome, ${username}!`, token });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Error logging in.' });
-  }
-});
-
+// ============================
 // Start the server
+// ============================
 app.listen(PORT, () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);
 });

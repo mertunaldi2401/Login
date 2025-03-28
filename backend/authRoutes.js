@@ -1,12 +1,14 @@
+const express = require('express');
+const router = express.Router();
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('./User'); // Your User model
+const User = require('./User');
 
-// Environment variable for JWT
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = 'g363308cs'; // Should be from env in production
 
-// Register User Controller
-const registerUser = async (req, res) => {
+// Register Route
+router.post('/register', async (req, res) => {
   const { username, password, confirmPassword } = req.body;
 
   if (!username || !password || !confirmPassword) {
@@ -28,7 +30,7 @@ const registerUser = async (req, res) => {
 
     const newUser = new User({
       username,
-      password: hashedPassword,
+      password: hashedPassword
     });
 
     await newUser.save();
@@ -38,10 +40,10 @@ const registerUser = async (req, res) => {
     console.error('Registration error:', err);
     res.status(500).json({ message: 'Error registering user.' });
   }
-};
+});
 
-// Login User Controller
-const loginUser = async (req, res) => {
+// Login Route
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -61,13 +63,17 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid username or password.' });
     }
 
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
     res.json({ message: `Welcome, ${username}!`, token });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Error logging in.' });
   }
-};
+});
 
-module.exports = { registerUser, loginUser };
+module.exports = router;

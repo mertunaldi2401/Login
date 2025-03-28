@@ -4,6 +4,7 @@ const router = express.Router();
 const { getAllUsers } = require('./userController');
 const authenticateToken = require('./authMiddleware');
 
-router.get('/users', authenticateToken, getAllUsers);
+// Protected route to get all users
+router.get('/', authenticateToken, getAllUsers);
 
 module.exports = router;
