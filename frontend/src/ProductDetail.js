@@ -1,5 +1,5 @@
 // ProductDetail.js
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReviewSection from './ReviewSection';
 
@@ -7,15 +7,18 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Extended mock data with price and images
+  // Track if the product was added to cart
+  const [addedToCart, setAddedToCart] = useState(false);
+
   const mockProducts = [
     {
       id: 1,
       name: 'Fender Stratocaster',
       model: 'Strat Classic',
       serial: 'FND-002',
-      image: '/images/1228000110250840_1.jpg.webp',
-      price: 1299.99
+      image: '/images/fender.jpg',
+      price: 1299.99,
+      stock: 5
     },
     {
       id: 4,
@@ -23,7 +26,8 @@ function ProductDetail() {
       model: '7 Strings',
       serial: 'GTR-001',
       image: '/images/epiphone-m-28833_1.jpg',
-      price: 899.99
+      price: 899.99,
+      stock: 0
     },
     {
       id: 5,
@@ -31,7 +35,8 @@ function ProductDetail() {
       model: 'TOD10',
       serial: 'GTR-002',
       image: '/images/ibanez-tod10.jpg',
-      price: 1499.99
+      price: 1499.99,
+      stock: 3
     },
     {
       id: 2,
@@ -39,7 +44,8 @@ function ProductDetail() {
       model: 'Nano Cortex',
       serial: 'EFF-002',
       image: '/images/19425051_800.jpg',
-      price: 299.99
+      price: 299.99,
+      stock: 10
     },
     {
       id: 3,
@@ -47,7 +53,8 @@ function ProductDetail() {
       model: 'Quad Cortex',
       serial: 'EFF-001',
       image: '/images/15848351_800.jpg',
-      price: 1599.99
+      price: 1599.99,
+      stock: 2
     },
     {
       id: 6,
@@ -55,7 +62,8 @@ function ProductDetail() {
       model: 'Paradigm Strings',
       serial: 'STR-001',
       image: '/images/images-2.jpeg',
-      price: 19.99
+      price: 19.99,
+      stock: 20
     },
     {
       id: 7,
@@ -63,14 +71,12 @@ function ProductDetail() {
       model: 'Regular Slinky',
       serial: 'STR-002',
       image: '/images/P02221_1.jpg.webp',
-      price: 9.99
+      price: 9.99,
+      stock: 15
     }
   ];
 
-  // Convert id to number
   const productId = parseInt(id, 10);
-
-  // Find product by id or fallback
   const product =
     mockProducts.find((p) => p.id === productId) || {
       id: 'unknown',
@@ -78,22 +84,27 @@ function ProductDetail() {
       model: 'N/A',
       serial: 'N/A',
       image: '',
-      price: 0
+      price: 0,
+      stock: 0
     };
 
   const addToCart = () => {
     // Retrieve existing cart or create a new one
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart.push(product);
     localStorage.setItem('cart', JSON.stringify(cart));
-    alert(`Added ${product.name} to cart!`);
+
+    // Remove the alert line:
+    // alert(`Added ${product.name} to cart!`);
+
+    setAddedToCart(true);
   };
 
   // Styles
   const detailContainerStyle = {
     padding: '2rem',
     color: '#fff',
-    backgroundColor: '#000', // Dark background
+    backgroundColor: '#000',
     minHeight: '100vh'
   };
 
@@ -160,16 +171,42 @@ function ProductDetail() {
           <h2 style={modelStyle}>Model: {product.model}</h2>
           <p>Serial: {product.serial}</p>
           <p style={priceStyle}>Price: ${product.price.toFixed(2)}</p>
-          <button style={buttonStyle} onClick={addToCart}>
-            Add to Cart
-          </button>
+
+          {product.stock > 0 ? (
+            addedToCart ? (
+              <span
+                style={{
+                  color: 'limegreen',
+                  fontWeight: 'bold',
+                  marginRight: '1rem'
+                }}
+              >
+                Added to Cart
+              </span>
+            ) : (
+              <button style={buttonStyle} onClick={addToCart}>
+                Add to Cart
+              </button>
+            )
+          ) : (
+            <span
+              style={{
+                color: 'red',
+                fontWeight: 'bold',
+                marginRight: '1rem'
+              }}
+            >
+              Out of Stock
+            </span>
+          )}
+
           <button style={backButtonStyle} onClick={() => navigate(-1)}>
             Go Back
           </button>
         </div>
       </div>
 
-      {/* Insert the Review Section below the product info */}
+      {/* Review Section */}
       <ReviewSection />
     </div>
   );

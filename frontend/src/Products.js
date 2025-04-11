@@ -10,7 +10,7 @@ const products = [
     model: 'Strat Classic',
     serial: 'FND-002',
     category: 'Guitars',
-    image: '/images/1228000110250840_1.jpg.webp',
+    image: '/images/fender.jpg',
     price: 1299.99
   },
   {

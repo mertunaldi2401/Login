@@ -10,7 +10,15 @@ function Cart() {
     setCartItems(storedCart);
   }, []);
 
+  // Calculate total price
   const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 0), 0);
+
+  // Remove a specific item from the cart
+  const handleRemoveItem = (indexToRemove) => {
+    const updatedCart = cartItems.filter((_, index) => index !== indexToRemove);
+    setCartItems(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+  };
 
   const containerStyle = {
     minHeight: '100vh',
@@ -36,6 +44,16 @@ function Cart() {
     fontWeight: 'bold'
   };
 
+  const removeButtonStyle = {
+    background: 'red',
+    color: '#fff',
+    border: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    marginTop: '0.5rem'
+  };
+
   return (
     <div style={containerStyle}>
       <h1 style={titleStyle}>Your Cart</h1>
@@ -48,6 +66,13 @@ function Cart() {
             <p>Model: {item.model}</p>
             <p>Serial: {item.serial}</p>
             <p>Price: ${item.price?.toFixed(2)}</p>
+            {/* Remove button */}
+            <button
+              style={removeButtonStyle}
+              onClick={() => handleRemoveItem(index)}
+            >
+              Remove From Cart
+            </button>
           </div>
         ))
       )}
