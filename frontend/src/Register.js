@@ -47,54 +47,112 @@ function Register() {
     }
   };
 
+  const pageStyle = {
+    background: 'linear-gradient(135deg, #2a2a2a, #111)',
+    minHeight: '100vh',
+    padding: '3rem 2rem',
+    color: '#fff',
+    fontFamily: '"Metal Mania", cursive',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  };
+
+  const formContainerStyle = {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: '2rem',
+    borderRadius: '8px',
+    boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+    width: '100%',
+    maxWidth: '400px'
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '0.75rem',
+    margin: '0.5rem 0',
+    border: 'none',
+    borderRadius: '4px',
+    fontSize: '1rem'
+  };
+
+  const buttonStyle = {
+    width: '100%',
+    padding: '0.75rem',
+    marginTop: '1rem',
+    background: 'linear-gradient(45deg, #ff0000, #990000)',
+    border: 'none',
+    borderRadius: '4px',
+    color: '#fff',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'background 0.3s ease'
+  };
+
+  const titleStyle = {
+    textAlign: 'center',
+    fontSize: '3rem',
+    marginBottom: '1rem',
+    color: '#d50000',
+    textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
+  };
+
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>Register</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>Username: </label>
-          <input 
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required 
-          />
-        </div>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>Email: </label>
-          <input 
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required 
-          />
-        </div>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>Password: </label>
-          <input 
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required 
-          />
-        </div>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <label>Confirm Password: </label>
-          <input 
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required 
-          />
-        </div>
-        <button type="submit">Register</button>
-      </form>
-
-      <p style={{ marginTop: '1rem' }}>
-        <Link to="/admin">Go to Admin Panel</Link>
-      </p>
+    <div style={pageStyle}>
+      <div style={formContainerStyle}>
+        <h2 style={titleStyle}>Register</h2>
+        {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label>Username: </label>
+            <input 
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required 
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label>Email: </label>
+            <input 
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required 
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label>Password: </label>
+            <input 
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label>Confirm Password: </label>
+            <input 
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required 
+              style={inputStyle}
+            />
+          </div>
+          <button 
+            type="submit" 
+            style={buttonStyle}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'linear-gradient(45deg, #ff3333, #cc0000)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'linear-gradient(45deg, #ff0000, #990000)')}
+          >
+            Register
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
