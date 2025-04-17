@@ -8,7 +8,7 @@ exports.searchProducts = async (req, res) => {
     const filter = { ...textFilter, ...categoryFilter };
 
     const products = await Product.find(filter)
-      .sort({ quantityInStock: -1, name: 1 })
+      .sort({ quantityInStock: -1, stock: -1, name: 1 }) 
       .select('-__v')
       .lean();
 

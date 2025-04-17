@@ -5,6 +5,7 @@ const authenticateToken = require('./authMiddleware');
 const Cart = require('./Cart');
 const Product = require('./Product');
 const Order = require('./Order');
+const { forwardToDeliveryDept } = require('./services/deliveryService');
 
 // POST /orders → Place an order
 router.post('/', authenticateToken, async (req, res) => {
@@ -35,7 +36,10 @@ router.post('/', authenticateToken, async (req, res) => {
       totalPrice
     });
 
-    await order.save();
+    await order.save(); 
+
+    // NEW ❶ – fire‑and‑forget hand‑off to delivery department
+    forwardToDeliveryDept(order).catch(console.error);
 
     // Decrease product stocks
     for (const item of cart.items) {
