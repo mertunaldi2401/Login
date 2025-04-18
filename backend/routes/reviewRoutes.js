@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Review = require('../models/Reviews');
-const authRequired = require('../middleware/authMiddleware');
-const verifyDeliveredPurchase = require('../middleware/verifyDeliveredPurchaseMiddleware');
+const authRequired = require('../middlewares/authMiddleware');
+const verifyDeliveredPurchase = require('../middlewares/verifyDeliveredPurchaseMiddleware');
 
 // POST /products/:productId/reviews → must be mounted with `/products`
 router.post(

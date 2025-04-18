@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const authenticateToken = require('./authMiddleware');
-const Cart = require('./Cart');
-const Product = require('./Product');
-const Order = require('./Order');
-const { forwardToDeliveryDept } = require('./services/deliveryService');
+const authenticateToken = require('../middlewares/authMiddleware');
+const Cart = require('../models/Cart');
+const Product = require('../models/Product');
+const Order = require('../models/Order');
+const { forwardToDeliveryDept } = require('../services/deliveryService');
 
 // POST /orders → Place an order
 router.post('/', authenticateToken, async (req, res) => {
