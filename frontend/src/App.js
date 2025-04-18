@@ -4,14 +4,14 @@ import { AuthContext } from './AuthContext';
 import MainPage from './MainPage';
 import Login from './Login';
 import Register from './Register';
+import Products from './Products';
 import ProductDetail from './ProductDetail';
 import Cart from './Cart';
-import Products from './Products';
+import Checkout from './Checkout';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
   const isAuthenticated = auth.user !== null;
-
   const location = useLocation();
 
   const navStyle = {
@@ -24,7 +24,6 @@ function App() {
     boxShadow: '0 0 10px rgba(0,0,0,0.5)',
     borderBottom: '3px solid #d50000'
   };
-
   const logoStyle = {
     fontFamily: '"Metal Mania", cursive',
     fontSize: '1.8rem',
@@ -32,7 +31,6 @@ function App() {
     color: '#fff',
     textShadow: '2px 2px 5px rgba(0,0,0,0.5)'
   };
-
   const linkButtonStyle = {
     textDecoration: 'none',
     color: '#fff',
@@ -47,11 +45,9 @@ function App() {
     textAlign: 'center',
     width: '120px'
   };
-
   const linkButtonHover = {
     background: 'rgba(255, 0, 0, 0.4)'
   };
-
   const logoutButtonStyle = {
     ...linkButtonStyle,
     cursor: 'pointer'
@@ -60,7 +56,6 @@ function App() {
   const handleMouseEnter = (e) => {
     Object.assign(e.target.style, linkButtonHover);
   };
-
   const handleMouseLeave = (e) => {
     Object.assign(e.target.style, { background: 'rgba(255, 0, 0, 0.2)' });
   };
@@ -68,17 +63,13 @@ function App() {
   return (
     <div>
       <nav style={navStyle}>
-        <Link to="/" style={logoStyle}>
-          THOR'S MIGHTY GUITAR STORE
-        </Link>
-
+        <Link to="/" style={logoStyle}>THOR'S MIGHTY GUITAR STORE</Link>
         <div>
           {isAuthenticated ? (
             <>
               <span style={{ marginRight: '1em' }}>
                 Logged in as <b>{auth.user}</b>
               </span>
-
               {location.pathname === '/cart' ? (
                 <Link
                   to="/"
@@ -98,15 +89,14 @@ function App() {
                   Go to Cart
                 </Link>
               )}
-
-              <button
+              <span
+                onClick={logout}
                 style={logoutButtonStyle}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                onClick={logout}
               >
                 Logout
-              </button>
+              </span>
             </>
           ) : (
             <>
@@ -130,7 +120,6 @@ function App() {
           )}
         </div>
       </nav>
-
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<Login />} />
@@ -138,6 +127,7 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
       </Routes>
     </div>
   );
