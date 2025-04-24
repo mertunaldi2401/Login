@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+// ✅ App.js
+import React, { useContext, useState } from 'react';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import MainPage from './MainPage';
 import Login from './Login';
@@ -8,11 +9,38 @@ import Products from './Products';
 import ProductDetail from './ProductDetail';
 import Cart from './Cart';
 import Checkout from './Checkout';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
   const isAuthenticated = auth.user !== null;
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const handleEnter = (e) => {
+    if (e.key === 'Enter') {
+      setSearchQuery(searchInput);
+    }
+  };
+
+  const handleIconClick = () => {
+    setSearchQuery(searchInput);
+  };
+
+  const handleCategoryChange = (e) => {
+    const category = e.target.value;
+    setSelectedCategory(category);
+    if (category) {
+      navigate(`/?category=${encodeURIComponent(category)}`);
+    } else {
+      navigate('/');
+    }
+  };
 
   const navStyle = {
     display: 'flex',
@@ -24,6 +52,7 @@ function App() {
     boxShadow: '0 0 10px rgba(0,0,0,0.5)',
     borderBottom: '3px solid #d50000'
   };
+
   const logoStyle = {
     fontFamily: '"Metal Mania", cursive',
     fontSize: '1.8rem',
@@ -31,6 +60,45 @@ function App() {
     color: '#fff',
     textShadow: '2px 2px 5px rgba(0,0,0,0.5)'
   };
+
+  const searchContainerStyle = {
+    position: 'relative',
+    margin: '0 1rem',
+    flexGrow: 1,
+    maxWidth: '400px'
+  };
+
+  const searchInputStyle = {
+    width: '100%',
+    padding: '0.5rem 0.2rem 0.5rem 0.75rem',
+    fontSize: '1rem',
+    borderRadius: '4px',
+    border: 'none',
+    backgroundColor: '#fff',
+    color: '#333333'
+  };
+
+  const iconStyle = {
+    position: 'absolute',
+    right: '1px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#cf0808',
+    fontSize: '1.4rem',
+    cursor: 'pointer'
+  };
+
+  const categoryDropdownStyle = {
+    marginLeft: '1rem',
+    background: '#222',
+    color: '#fff',
+    border: '1px solid #d50000',
+    padding: '0.38rem 0.6rem',
+    fontSize: '1.1rem',
+    borderRadius: '4px',
+    fontFamily: '"Metal Mania", cursive'
+  };
+
   const linkButtonStyle = {
     textDecoration: 'none',
     color: '#fff',
@@ -45,9 +113,11 @@ function App() {
     textAlign: 'center',
     width: '120px'
   };
+
   const linkButtonHover = {
     background: 'rgba(255, 0, 0, 0.4)'
   };
+
   const logoutButtonStyle = {
     ...linkButtonStyle,
     cursor: 'pointer'
@@ -56,6 +126,7 @@ function App() {
   const handleMouseEnter = (e) => {
     Object.assign(e.target.style, linkButtonHover);
   };
+
   const handleMouseLeave = (e) => {
     Object.assign(e.target.style, { background: 'rgba(255, 0, 0, 0.2)' });
   };
@@ -64,6 +135,32 @@ function App() {
     <div>
       <nav style={navStyle}>
         <Link to="/" style={logoStyle}>THOR'S MIGHTY GUITAR STORE</Link>
+
+        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
+          <div style={searchContainerStyle}>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleEnter}
+              style={searchInputStyle}
+            />
+            <FontAwesomeIcon icon={faMagnifyingGlass} style={iconStyle} onClick={handleIconClick} />
+          </div>
+
+          <select
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            style={categoryDropdownStyle}
+          >
+            <option value="">Categories</option>
+            <option value="Guitars">Guitars</option>
+            <option value="Effects">Effects</option>
+            <option value="Strings">Strings</option>
+          </select>
+        </div>
+
         <div>
           {isAuthenticated ? (
             <>
@@ -120,8 +217,9 @@ function App() {
           )}
         </div>
       </nav>
+
       <Routes>
-        <Route path="/" element={<MainPage />} />
+        <Route path="/" element={<MainPage searchQuery={searchQuery} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/products" element={<Products />} />

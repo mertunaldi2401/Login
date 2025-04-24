@@ -7,7 +7,6 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Track if the product was added to cart
   const [addedToCart, setAddedToCart] = useState(false);
 
   const mockProducts = [
@@ -89,14 +88,9 @@ function ProductDetail() {
     };
 
   const addToCart = () => {
-    // Retrieve existing cart or create a new one
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart.push(product);
     localStorage.setItem('cart', JSON.stringify(cart));
-
-    // Remove the alert line:
-    // alert(`Added ${product.name} to cart!`);
-
     setAddedToCart(true);
   };
 
@@ -111,7 +105,8 @@ function ProductDetail() {
   const contentStyle = {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '2rem'
+    gap: '2rem',
+    flexWrap: 'wrap'
   };
 
   const imageStyle = {
@@ -120,8 +115,20 @@ function ProductDetail() {
     borderRadius: '6px'
   };
 
+  const rightSideStyle = {
+    display: 'flex',
+    flex: 1,
+    gap: '2rem'
+  };
+
   const infoStyle = {
-    maxWidth: '500px'
+    flex: 1,
+    minWidth: '300px'
+  };
+
+  const reviewStyle = {
+    flex: 1,
+    minWidth: '300px'
   };
 
   const titleStyle = {
@@ -165,49 +172,42 @@ function ProductDetail() {
           <img src={product.image} alt={product.name} style={imageStyle} />
         )}
 
-        {/* Product Info */}
-        <div style={infoStyle}>
-          <h1 style={titleStyle}>{product.name}</h1>
-          <h2 style={modelStyle}>Model: {product.model}</h2>
-          <p>Serial: {product.serial}</p>
-          <p style={priceStyle}>Price: ${product.price.toFixed(2)}</p>
+        {/* Right Side: Info and Review side-by-side */}
+        <div style={rightSideStyle}>
+          {/* Product Info */}
+          <div style={infoStyle}>
+            <h1 style={titleStyle}>{product.name}</h1>
+            <h2 style={modelStyle}>Model: {product.model}</h2>
+            <p>Serial: {product.serial}</p>
+            <p style={priceStyle}>Price: ${product.price.toFixed(2)}</p>
 
-          {product.stock > 0 ? (
-            addedToCart ? (
-              <span
-                style={{
-                  color: 'limegreen',
-                  fontWeight: 'bold',
-                  marginRight: '1rem'
-                }}
-              >
-                Added to Cart
-              </span>
+            {product.stock > 0 ? (
+              addedToCart ? (
+                <span style={{ color: 'limegreen', fontWeight: 'bold', marginRight: '1rem' }}>
+                  Added to Cart
+                </span>
+              ) : (
+                <button style={buttonStyle} onClick={addToCart}>
+                  Add to Cart
+                </button>
+              )
             ) : (
-              <button style={buttonStyle} onClick={addToCart}>
-                Add to Cart
-              </button>
-            )
-          ) : (
-            <span
-              style={{
-                color: 'red',
-                fontWeight: 'bold',
-                marginRight: '1rem'
-              }}
-            >
-              Out of Stock
-            </span>
-          )}
+              <span style={{ color: 'red', fontWeight: 'bold', marginRight: '1rem' }}>
+                Out of Stock
+              </span>
+            )}
 
-          <button style={backButtonStyle} onClick={() => navigate(-1)}>
-            Go Back
-          </button>
+            <button style={backButtonStyle} onClick={() => navigate(-1)}>
+              Go Back
+            </button>
+          </div>
+
+          {/* Review Section fills right side */}
+          <div style={reviewStyle}>
+            <ReviewSection />
+          </div>
         </div>
       </div>
-
-      {/* Review Section */}
-      <ReviewSection />
     </div>
   );
 }

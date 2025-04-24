@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-// 1. Ürün Listesi (now with price)
 const products = [
   {
     id: 1,
@@ -68,7 +67,6 @@ const products = [
   }
 ];
 
-// 2. Kategoriye göre gradient stilleri
 const categoryStyles = {
   Guitars: {
     background: 'linear-gradient(45deg, #000000, #ff0000)',
@@ -84,9 +82,24 @@ const categoryStyles = {
   }
 };
 
-function Products() {
-  // Ürünleri kategori bazında gruplandırma
-  const groupedProducts = products.reduce((groups, product) => {
+function Products({ searchQuery = '', categoryFilter = '' }) {
+  const search = searchQuery.toLowerCase();
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(search) ||
+      product.model.toLowerCase().includes(search) ||
+      product.serial.toLowerCase().includes(search) ||
+      product.category.toLowerCase().includes(search);
+
+    const matchesCategory =
+      !categoryFilter ||
+      product.category.toLowerCase() === categoryFilter.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const groupedProducts = filteredProducts.reduce((groups, product) => {
     const { category } = product;
     if (!groups[category]) {
       groups[category] = [];
@@ -95,7 +108,10 @@ function Products() {
     return groups;
   }, {});
 
-  // Stil Tanımları
+  // Debug
+  console.log('Search query:', searchQuery);
+  console.log('Category filter:', categoryFilter);
+
   const containerStyle = {
     padding: '20px',
     fontFamily: '"Metal Mania", cursive',
@@ -135,13 +151,16 @@ function Products() {
     margin: '10px',
     padding: '15px',
     width: '220px',
+    height: '450px',
     textAlign: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     color: '#fff',
     boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)',
     borderRadius: '6px',
     transition: 'transform 0.2s ease-in-out',
-    textDecoration: 'none'
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between'
   };
 
   const productImageStyle = {
@@ -170,49 +189,51 @@ function Products() {
   return (
     <div style={containerStyle}>
       <h1 style={mainTitleStyle}>THOR'S EPIC COLLECTION</h1>
-      {Object.keys(groupedProducts).map((category) => {
-        const catStyle = categoryStyles[category] || {
-          background: '#333',
-          color: '#fff'
-        };
+      {Object.keys(groupedProducts).length === 0 ? (
+        <p style={{ textAlign: 'center', fontSize: '1.2rem' }}>
+          No products match your search or category selection.
+        </p>
+      ) : (
+        Object.keys(groupedProducts).map((category) => {
+          const catStyle = categoryStyles[category] || {
+            background: '#333',
+            color: '#fff'
+          };
 
-        return (
-          <div
-            key={category}
-            style={{
-              ...categorySectionStyle,
-              ...catStyle
-            }}
-          >
-            <h2 style={categoryTitleStyle}>{category}</h2>
-            <div style={productsWrapperStyle}>
-              {groupedProducts[category].map((product) => (
-                <Link
-                  key={product.id}
-                  to={`/product/${product.id}`}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  <div
-                    style={productCardStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          return (
+            <div
+              key={category}
+              style={{
+                ...categorySectionStyle,
+                ...catStyle
+              }}
+            >
+              <h2 style={categoryTitleStyle}>{category}</h2>
+              <div style={productsWrapperStyle}>
+                {groupedProducts[category].map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/product/${product.id}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
                   >
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      style={productImageStyle}
-                    />
-                    <h3 style={productNameStyle}>{product.name}</h3>
-                    <p style={productModelStyle}>Model: {product.model}</p>
-                    <p style={productSerialStyle}>Serial: {product.serial}</p>
-                    <p style={productSerialStyle}>Price: ${product.price.toFixed(2)}</p>
-                  </div>
-                </Link>
-              ))}
+                    <div
+                      style={productCardStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                      <img src={product.image} alt={product.name} style={productImageStyle} />
+                      <h3 style={productNameStyle}>{product.name}</h3>
+                      <p style={productModelStyle}>Model: {product.model}</p>
+                      <p style={productSerialStyle}>Serial: {product.serial}</p>
+                      <p style={productSerialStyle}>Price: ${product.price.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })
+      )}
     </div>
   );
 }

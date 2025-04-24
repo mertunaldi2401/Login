@@ -1,19 +1,18 @@
 // Cart.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // On mount, load cart from localStorage
     const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
     setCartItems(storedCart);
   }, []);
 
-  // Calculate total price
   const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 0), 0);
 
-  // Remove a specific item from the cart
   const handleRemoveItem = (indexToRemove) => {
     const updatedCart = cartItems.filter((_, index) => index !== indexToRemove);
     setCartItems(updatedCart);
@@ -54,6 +53,18 @@ function Cart() {
     marginTop: '0.5rem'
   };
 
+  const checkoutButtonStyle = {
+    marginTop: '2rem',
+    background: 'linear-gradient(45deg, #ff0000, #990000)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '0.75rem 2rem',
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer'
+  };
+
   return (
     <div style={containerStyle}>
       <h1 style={titleStyle}>Your Cart</h1>
@@ -66,7 +77,6 @@ function Cart() {
             <p>Model: {item.model}</p>
             <p>Serial: {item.serial}</p>
             <p>Price: ${item.price?.toFixed(2)}</p>
-            {/* Remove button */}
             <button
               style={removeButtonStyle}
               onClick={() => handleRemoveItem(index)}
@@ -77,9 +87,19 @@ function Cart() {
         ))
       )}
       {cartItems.length > 0 && (
-        <div style={priceStyle}>
-          Total: ${totalPrice.toFixed(2)}
-        </div>
+        <>
+          <div style={priceStyle}>
+            Total: ${totalPrice.toFixed(2)}
+          </div>
+          <button
+            style={checkoutButtonStyle}
+            onClick={() => navigate('/checkout')}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff3333, #cc0000)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff0000, #990000)'}
+          >
+            Proceed to Checkout
+          </button>
+        </>
       )}
     </div>
   );

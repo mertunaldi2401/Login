@@ -1,12 +1,17 @@
-// MainPage.js
+// ✅ MainPage.js
 import React, { useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import Products from './Products';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
-function MainPage() {
+function MainPage({ searchQuery }) {
   const { auth } = useContext(AuthContext);
   const username = auth.user ? auth.user : 'Guest';
+
+  // ✅ Extract category filter from the URL
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const categoryQuery = params.get('category') || '';
 
   const pageStyle = {
     background: 'linear-gradient(135deg, #2a2a2a, #111)',
@@ -19,7 +24,7 @@ function MainPage() {
 
   const headerStyle = {
     textAlign: 'center',
-    marginBottom: '3rem',
+    marginBottom: '2rem',
     textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
   };
 
@@ -63,8 +68,8 @@ function MainPage() {
       </header>
 
       <section style={productsContainerStyle}>
-        <Products />
-        {/* Go to Cart button */}
+        {/* ✅ Pass category and search to Products */}
+        <Products searchQuery={searchQuery} categoryFilter={categoryQuery} />
         <div style={{ textAlign: 'center' }}>
           <Link to="/cart">
             <button style={cartButtonStyle}>Go to Cart</button>
