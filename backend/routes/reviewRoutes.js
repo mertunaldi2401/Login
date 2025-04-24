@@ -15,6 +15,12 @@ router.post(
     const userId = req.user._id;
 
     try {
+      // Prevent duplicate reviews
+      const existingReview = await Review.findOne({ productId, userId });
+      if (existingReview) {
+        return res.status(400).json({ message: 'You have already reviewed this product.' });
+      }
+
       const newReview = await Review.create({
         productId,
         userId,
