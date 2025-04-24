@@ -36,8 +36,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     const totalRequested = currentQuantity + quantity;
 
-    if (product.stock < totalRequested) {
-      return res.status(400).json({ message: `Only ${product.stock} items available in stock.` });
+    if (product.quantityInStock < totalRequested) {
+      return res.status(400).json({ message: `Only ${product.quantityInStock} items available in stock.` });
     }
 
     if (existingItem) {
@@ -45,6 +45,10 @@ router.post('/', authenticateToken, async (req, res) => {
     } else {
       cart.items.push({ product: productId, quantity });
     }
+
+    // Decrease stock in the product document
+    product.quantityInStock -= quantity;
+    await product.save();
 
     await cart.save();
     res.status(200).json({ message: 'Product added to cart.', cart });
@@ -70,7 +74,7 @@ router.delete('/:productId', authenticateToken, async (req, res) => {
     // Restock the product
     const product = await Product.findById(productId);
     if (product) {
-      product.stock += itemToRemove.quantity;
+      product.quantityInStock += itemToRemove.quantity;
       await product.save();
     }
 
