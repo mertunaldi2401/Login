@@ -5,6 +5,32 @@ function Admin() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState('');
+  
+  const handleRefund = async (orderId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5001/orders/${orderId}/refund`,
+        { method: 'POST' }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Refund request failed');
+      } else {
+        alert('Refund requested successfully');
+        setOrders(prev =>
+          prev.map(o =>
+            o._id === orderId
+              ? { ...o, status: 'refund-requested' }
+              : o
+          )
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error.');
+    }
+  };
+  
   const [productMessage, setProductMessage] = useState('');
   const [productForm, setProductForm] = useState({
     name: '', model: '', serialNumber: '', description: '',
@@ -208,6 +234,23 @@ function Admin() {
                 <option value="in-transit">In Transit</option>
                 <option value="delivered">Delivered</option>
               </select>
+              {order.status === 'delivered' &&
+                (Date.now() - new Date(order.updatedAt).getTime()) <= 30 * 24 * 60 * 60 * 1000 && (
+                <button
+                  onClick={() => handleRefund(order._id)}
+                  style={{
+                    marginTop: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#e74c3c',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Request Refund
+                </button>
+              )}
             </div>
           ))
         )}

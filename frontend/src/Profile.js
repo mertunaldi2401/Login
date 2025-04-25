@@ -9,6 +9,36 @@ const Profile = () => {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [ordersError, setOrdersError] = useState(null);
 
+  // REFUND: İade isteği için handler (user side)
+  const handleRefund = async (orderId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5001/orders/${orderId}/refund`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Refund request failed');
+      } else {
+        alert('Refund requested successfully');
+        setOrders(prev =>
+          prev.map(o =>
+            o._id === orderId ? { ...o, status: 'refund-requested' } : o
+          )
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error.');
+    }
+  };
+
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -83,6 +113,23 @@ const Profile = () => {
                   {order.status}
                 </span>
               </p>
+              {order.status === 'delivered' &&
+                (Date.now() - new Date(order.updatedAt).getTime()) <= 15 * 24 * 60 * 60 * 1000 && (
+                <button
+                  onClick={() => handleRefund(order._id)}
+                  style={{
+                    marginTop: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#e74c3c',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Request Refund
+                </button>
+              )}
             </li>
           ))}
         </ul>
