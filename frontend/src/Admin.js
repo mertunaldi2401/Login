@@ -1,0 +1,183 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+function Admin() {
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
+  const [productMessage, setProductMessage] = useState('');
+  const [productForm, setProductForm] = useState({
+    name: '', model: '', serialNumber: '', description: '',
+    quantityInStock: '', price: '', warrantyStatus: '',
+    distributorInfo: '', image: '', category: '', brand: '',
+    isFeatured: false, rating: '', numReviews: '',
+  });
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('http://localhost:5001/admin/users')
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch(() => setError('Failed to fetch user list.'));
+  }, []);
+
+  const deleteUser = async (username) => {
+    try {
+      const res = await fetch(`http://localhost:5001/admin/users/${username}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) setError(data.message || 'Error deleting user.');
+      else setUsers(prev => prev.filter(u => u.username !== username));
+    } catch {
+      setError('Network error. Could not delete user.');
+    }
+  };
+
+  const deleteAllUsers = async () => {
+    try {
+      const res = await fetch('http://localhost:5001/admin/users', { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) setError(data.message || 'Error deleting all users.');
+      else setUsers([]);
+    } catch {
+      setError('Network error. Could not delete all users.');
+    }
+  };
+
+  const handleBack = () => {
+    navigate('/login');
+  };
+
+  const handleProductChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProductForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:5001/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productForm),
+      });
+      const data = await res.json();
+      if (!res.ok) setProductMessage(data.message || 'Error adding product.');
+      else {
+        setProductMessage('Product added successfully!');
+        setProductForm({
+          name: '', model: '', serialNumber: '', description: '',
+          quantityInStock: '', price: '', warrantyStatus: '',
+          distributorInfo: '', image: '', category: '', brand: '',
+          isFeatured: false, rating: '', numReviews: '',
+        });
+      }
+    } catch {
+      setProductMessage('Network error. Could not add product.');
+    }
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '0.5rem', marginBottom: '0.75rem',
+    borderRadius: '4px', border: '1px solid #ccc'
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh',
+      fontFamily: 'Arial, sans-serif',
+      background: '#f5f5f5'
+    }}>
+      
+      {/* Left Panel - Users */}
+      <div style={{
+        flex: 1, padding: '1rem', backgroundColor: '#fff',
+        borderRight: '1px solid #ddd', overflowY: 'auto'
+      }}>
+        <h3>User List</h3>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button onClick={deleteAllUsers} style={{ marginBottom: '1rem', background: '#c0392b', color: '#fff', padding: '0.5rem 1rem', border: 'none', borderRadius: '5px' }}>
+          Delete All Users
+        </button>
+        {users.length === 0 ? (
+          <p>No users found.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {users.map(user => (
+              <li key={user.username} style={{
+                marginBottom: '1rem',
+                padding: '0.5rem',
+                border: '1px solid #eee',
+                borderRadius: '5px',
+                background: '#fafafa'
+              }}>
+                <strong>{user.username}</strong><br />
+                <small>{user.email}</small><br />
+                <button onClick={() => deleteUser(user.username)} style={{
+                  marginTop: '0.5rem',
+                  background: '#e74c3c',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}>Delete</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Center Panel - Product Form */}
+      <div style={{ flex: 1, padding: '1.5rem' }}>
+        <h3>Add Product</h3>
+        <form onSubmit={handleProductSubmit}>
+          {Object.entries(productForm).map(([key, val]) =>
+            key === 'isFeatured' ? (
+              <label key={key} style={{ display: 'block', marginBottom: '1rem' }}>
+                <input type="checkbox" name={key} checked={val} onChange={handleProductChange} />
+                {' '}Featured
+              </label>
+            ) : (
+              <input
+                key={key}
+                type="text"
+                name={key}
+                placeholder={key}
+                value={val}
+                onChange={handleProductChange}
+                style={inputStyle}
+              />
+            )
+          )}
+          <button type="submit" style={{
+            background: '#2ecc71', color: '#fff', border: 'none',
+            padding: '0.5rem 1rem', borderRadius: '5px', cursor: 'pointer'
+          }}>
+            Add Product
+          </button>
+          {productMessage && <p style={{ marginTop: '1rem' }}>{productMessage}</p>}
+        </form>
+      </div>
+
+      {/* Right Panel - Controls */}
+      <div style={{
+        flex: 1, padding: '1rem', backgroundColor: '#f0f0f0',
+        borderLeft: '1px solid #ddd'
+      }}>
+        <h3>Controls</h3>
+        <button onClick={handleBack} style={{
+          background: '#34495e', color: '#fff', padding: '0.5rem 1rem',
+          border: 'none', borderRadius: '5px', cursor: 'pointer'
+        }}>
+          ⬅ Back to Login
+        </button>
+        <div style={{ marginTop: '2rem' }}>
+          <p>You can manage users, add products, and return to login.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Admin;
