@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Admin() {
   const [users, setUsers] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [error, setError] = useState('');
   const [productMessage, setProductMessage] = useState('');
   const [productForm, setProductForm] = useState({
@@ -16,9 +17,16 @@ function Admin() {
 
   useEffect(() => {
     fetch('http://localhost:5001/admin/users')
-      .then((res) => res.json())
-      .then((data) => setUsers(data))
+      .then(res => res.json())
+      .then(data => setUsers(data))
       .catch(() => setError('Failed to fetch user list.'));
+  }, []);
+
+  useEffect(() => {
+    fetch('http://localhost:5001/orders/all')
+      .then(res => res.json())
+      .then(data => setOrders(data))
+      .catch(() => console.error('Failed to fetch orders'));
   }, []);
 
   const deleteUser = async (username) => {
@@ -76,6 +84,23 @@ function Admin() {
     }
   };
 
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5001/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        setOrders(prev =>
+          prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o)
+        );
+      }
+    } catch (err) {
+      console.error('Error updating order status:', err);
+    }
+  };
+
   const inputStyle = {
     width: '100%', padding: '0.5rem', marginBottom: '0.75rem',
     borderRadius: '4px', border: '1px solid #ccc'
@@ -89,7 +114,6 @@ function Admin() {
       background: '#f5f5f5'
     }}>
       
-      {/* Left Panel - Users */}
       <div style={{
         flex: 1, padding: '1rem', backgroundColor: '#fff',
         borderRight: '1px solid #ddd', overflowY: 'auto'
@@ -128,7 +152,6 @@ function Admin() {
         )}
       </div>
 
-      {/* Center Panel - Product Form */}
       <div style={{ flex: 1, padding: '1.5rem' }}>
         <h3>Add Product</h3>
         <form onSubmit={handleProductSubmit}>
@@ -160,20 +183,41 @@ function Admin() {
         </form>
       </div>
 
-      {/* Right Panel - Controls */}
       <div style={{
         flex: 1, padding: '1rem', backgroundColor: '#f0f0f0',
-        borderLeft: '1px solid #ddd'
+        borderLeft: '1px solid #ddd', overflowY: 'auto'
       }}>
-        <h3>Controls</h3>
-        <button onClick={handleBack} style={{
-          background: '#34495e', color: '#fff', padding: '0.5rem 1rem',
-          border: 'none', borderRadius: '5px', cursor: 'pointer'
-        }}>
-          ⬅ Back to Login
-        </button>
+        <h3>Orders</h3>
+        {orders.length === 0 ? (
+          <p>No orders yet.</p>
+        ) : (
+          orders.map(order => (
+            <div key={order._id} style={{
+              background: '#fff', marginBottom: '1rem', padding: '1rem',
+              borderRadius: '5px', boxShadow: '0 0 5px rgba(0,0,0,0.1)'
+            }}>
+              <p><strong>User:</strong> {order.user?.username || 'Unknown'}</p>
+              <p><strong>Total Price:</strong> ${order.totalPrice}</p>
+              <p><strong>Status:</strong> {order.status}</p>
+              <select
+                value={order.status}
+                onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                style={{ padding: '0.5rem', marginTop: '0.5rem', borderRadius: '4px' }}
+              >
+                <option value="processing">Processing</option>
+                <option value="in-transit">In Transit</option>
+                <option value="delivered">Delivered</option>
+              </select>
+            </div>
+          ))
+        )}
         <div style={{ marginTop: '2rem' }}>
-          <p>You can manage users, add products, and return to login.</p>
+          <button onClick={handleBack} style={{
+            background: '#34495e', color: '#fff', padding: '0.5rem 1rem',
+            border: 'none', borderRadius: '5px', cursor: 'pointer'
+          }}>
+            ⬅ Back to Login
+          </button>
         </div>
       </div>
     </div>

@@ -9,9 +9,10 @@ import Products from './Products';
 import ProductDetail from './ProductDetail';
 import Cart from './Cart';
 import Checkout from './Checkout';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import Admin from './Admin';
+import Profile from './Profile';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
@@ -162,12 +163,17 @@ function App() {
           </select>
         </div>
 
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {isAuthenticated ? (
             <>
               <span style={{ marginRight: '1em' }}>
                 Logged in as <b>{auth.user}</b>
               </span>
+
+              <Link to="/profile" style={{ marginRight: '1rem', fontSize: '1.5rem', color: '#fff' }}>
+                <FontAwesomeIcon icon={faUser} title="Profile" />
+              </Link>
+
               {location.pathname === '/cart' ? (
                 <Link
                   to="/"
@@ -228,6 +234,7 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </div>
   );

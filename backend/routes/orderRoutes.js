@@ -73,4 +73,45 @@ router.get('/history', authenticateToken, async (req, res) => {
   }
 });
 
+
+router.put('/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!['processing', 'in-transit', 'delivered'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value.' });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).populate('user', 'username');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+
+    res.json({ message: 'Order status updated successfully.', order });
+  } catch (err) {
+    console.error('Order status update error:', err);
+    res.status(500).json({ message: 'Failed to update order status.' });
+  }
+});
+
+// GET /orders/all → Admin panel için tüm siparişleri getir
+router.get('/all', async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('user', 'username')
+      .sort({ createdAt: -1 });
+      
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching all orders:', err);
+    res.status(500).json({ message: 'Failed to retrieve orders.' });
+  }
+});
+
+
 module.exports = router;

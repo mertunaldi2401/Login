@@ -28,6 +28,8 @@ connectDB();
 // Middleware
 app.use(cors());
 app.use(express.json());
+console.log('JWT_SECRET loaded:', process.env.JWT_SECRET);
+
 
 // Routes
 app.use('/auth',    authRoutes);
