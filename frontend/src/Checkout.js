@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function Checkout() {
   // State for cart items (retrieved from localStorage for this example)
   const [cartItems, setCartItems] = useState([]);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Load cart items from localStorage on component mount
@@ -69,6 +73,32 @@ function Checkout() {
 
   // Additional styling for responsive tweaks (optional):
   // e.g., we could adjust flexDirection for very narrow screens via JS or add media queries in a styled-jsx block.
+
+  // Place Order Handler
+  const handlePlaceOrder = async () => {
+    try {
+      setIsPlacingOrder(true);
+      const token = localStorage.getItem('token');
+
+      const res = await axios.post('http://localhost:5001/orders', {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const order = res.data.order;
+      console.log('Order created:', order);
+
+      localStorage.removeItem('cart');
+
+      navigate(`/invoice/${order._id}`);
+    } catch (err) {
+      console.error('❌ Frontend order error:', err.response?.data || err.message);
+      alert(err.response?.data?.error || 'Failed to place order. Please try again.');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   // Render the checkout form and summary
   return (
@@ -216,10 +246,12 @@ function Checkout() {
         <button 
           type="button" 
           style={buttonStyle}
+          onClick={handlePlaceOrder}
+          disabled={isPlacingOrder}
           onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff3333, #cc0000)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff0000, #990000)'}
         >
-          Proceed to Payment
+          {isPlacingOrder ? 'Placing Order...' : 'Proceed to Payment'}
         </button>
       </div>
     </div>

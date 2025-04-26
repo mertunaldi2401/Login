@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReviewSection from './ReviewSection';
+import axios from 'axios';
 
 function ProductDetail() {
   const { id } = useParams();
@@ -87,11 +88,26 @@ function ProductDetail() {
       stock: 0
     };
 
-  const addToCart = () => {
+  const addToCart = async () => {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart.push(product);
     localStorage.setItem('cart', JSON.stringify(cart));
     setAddedToCart(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put('http://localhost:5001/cart', {
+        productId: product.id,
+        quantity: 1
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log('✅ Product also added to backend cart.');
+    } catch (err) {
+      console.error('❌ Backend cart update failed:', err);
+    }
   };
 
   // Styles

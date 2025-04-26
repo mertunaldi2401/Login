@@ -13,6 +13,7 @@ import Admin from './Admin';
 import Profile from './Profile';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
+import InvoicePage from './InvoicePage';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
@@ -233,6 +234,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/invoice/:orderId" element={<InvoicePage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
