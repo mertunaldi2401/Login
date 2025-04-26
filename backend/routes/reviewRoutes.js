@@ -1,3 +1,4 @@
+// routes/reviewRoutes.js
 const express = require('express');
 const router = express.Router();
 const Review = require('../models/Reviews');
@@ -25,7 +26,8 @@ router.post(
         productId,
         userId,
         rating,
-        comment
+        comment,
+        approved: false  // 🔥 Yorumlar otomatik onaylı gelmeyecek
       });
 
       res.status(201).json(newReview);
