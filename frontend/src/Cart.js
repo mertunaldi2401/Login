@@ -1,17 +1,29 @@
 // Cart.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-    setCartItems(storedCart);
+    const fetchCart = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5001/cart', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCartItems(res.data.items || []);
+      } catch (err) {
+        console.error('Failed to fetch cart:', err.response?.data || err.message);
+      }
+    };
+
+    fetchCart();
   }, []);
 
-  const totalPrice = cartItems.reduce((acc, item) => acc + (item.price || 0), 0);
+  const totalPrice = cartItems.reduce((acc, item) => acc + (item.product?.price || 0), 0);
 
   const handleRemoveItem = (indexToRemove) => {
     const updatedCart = cartItems.filter((_, index) => index !== indexToRemove);
@@ -73,10 +85,10 @@ function Cart() {
       ) : (
         cartItems.map((item, index) => (
           <div key={index} style={itemStyle}>
-            <h3>{item.name}</h3>
-            <p>Model: {item.model}</p>
-            <p>Serial: {item.serial}</p>
-            <p>Price: ${item.price?.toFixed(2)}</p>
+            <h3>{item.product?.name}</h3>
+            <p>Model: {item.product?.model}</p>
+            <p>Serial: {item.product?.serialNumber}</p>
+            <p>Price: ${item.product?.price?.toFixed(2)}</p>
             <button
               style={removeButtonStyle}
               onClick={() => handleRemoveItem(index)}

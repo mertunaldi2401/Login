@@ -20,12 +20,12 @@ function Admin() {
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(() => setError('Failed to fetch user list.'));
-  }, []);
-
-  useEffect(() => {
+  }, []);  
+  
+  useEffect(() => {   
     fetch('http://localhost:5001/orders/all')
       .then(res => res.json())
-      .then(data => setOrders(data))
+      .then(data => setOrders(Array.isArray(data) ? data : []))
       .catch(() => console.error('Failed to fetch orders'));
   }, []);
 
@@ -188,10 +188,10 @@ function Admin() {
         borderLeft: '1px solid #ddd', overflowY: 'auto'
       }}>
         <h3>Orders</h3>
-        {orders.length === 0 ? (
+        {Array.isArray(orders) && orders.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
-          orders.map(order => (
+          Array.isArray(orders) && orders.map(order => (
             <div key={order._id} style={{
               background: '#fff', marginBottom: '1rem', padding: '1rem',
               borderRadius: '5px', boxShadow: '0 0 5px rgba(0,0,0,0.1)'

@@ -42,8 +42,31 @@ function InvoicePage() {
         setLoading(false);
       }
     }
-
     fetchOrder();
+  }, [orderId]);
+
+  // Auto-download invoice PDF after 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`http://localhost:5001/orders/${orderId}/invoice`, {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob',
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `invoice-${orderId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        console.error('❌ Failed to auto-download invoice:', error);
+      }
+    }, 2000); // 2 seconds delay
+    return () => clearTimeout(timer);
   }, [orderId]);
 
   if (loading) {

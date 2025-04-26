@@ -45,7 +45,7 @@ router.post('/', authenticateToken, async (req, res) => {
     try {
       const populatedOrder = await Order.findById(order._id).populate('items.product');
       const pdfBuffer = await generateInvoicePDF(populatedOrder);
-      await sendInvoiceEmail(req.user.id, pdfBuffer);
+      await sendInvoiceEmail(req.user.id, pdfBuffer, order._id);
       console.log('✅ Invoice sent to user successfully.');
     } catch (err) {
       console.error('❌ Error sending invoice email:', err);
@@ -85,6 +85,21 @@ router.get('/history', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /orders/:id → Fetch a single order (for invoice display)
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('items.product');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error('Error fetching order:', err);
+    res.status(500).json({ message: 'Failed to fetch order.' });
+  }
+});
 
 router.put('/:id/status', async (req, res) => {
   try {

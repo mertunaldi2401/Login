@@ -25,24 +25,22 @@ function ProductDetail() {
   }, [id]);
 
   const addToCart = async () => {
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    cart.push(product);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    setAddedToCart(true);
-
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5001/cart', {
-        productId: product._id,  // dikkat: artık MongoDB id
+      await axios.post('http://localhost:5001/cart', {
+        productId: product._id,
         quantity: 1
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('✅ Product also added to backend cart.');
+  
+      setAddedToCart(true);
+      alert('✅ Product added to cart successfully!');
     } catch (err) {
-      console.error('❌ Backend cart update failed:', err);
+      console.error('❌ Backend cart update failed:', err.response?.data || err.message);
+      alert('Failed to add product to cart.');
     }
   };
 
