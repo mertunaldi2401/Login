@@ -1,3 +1,4 @@
+// routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
 
@@ -5,9 +6,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET; // Should be from env in production
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Register Route
+// Register Route (aynı kalıyor)
 router.post('/register', async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
 
@@ -20,11 +21,7 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Kullanıcı adı veya e-posta ile eşleşen biri var mı?
-    const existingUser = await User.findOne({ 
-      $or: [{ username }, { email }]
-    });
-
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
       return res.status(400).json({ message: 'Username or email already exists.' });
     }
@@ -46,9 +43,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login Route
+// Login Route (BURAYI DEĞİŞTİRİYORUZ 🔥)
 router.post('/login', async (req, res) => {
-  console.log('REQ BODY:', req.body);
   const { identifier, password } = req.body;
 
   if (!identifier || !password) {
@@ -70,8 +66,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid username or password.' });
     }
 
+    // 🔥 BURADA ARTIK role BİLGİSİNİ DE TOKEN'A KOYUYORUZ
     const token = jwt.sign(
-      { id: user._id, username: user.username },
+      {
+        id: user._id,
+        username: user.username,
+        role: user.role || 'user'  // Eğer rolü yoksa 'user' diye default set ediyoruz
+      },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
