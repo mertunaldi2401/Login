@@ -6,6 +6,8 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const { forwardToDeliveryDept } = require('../services/deliveryService');
+const { generateInvoicePDF } = require('../services/invoiceService');
+const { sendInvoiceEmail } = require('../services/emailService');
 
 // POST /orders → Place an order
 router.post('/', authenticateToken, async (req, res) => {
@@ -38,6 +40,16 @@ router.post('/', authenticateToken, async (req, res) => {
 
     await order.save(); 
 
+    
+    // ➡️ Generate PDF and send email
+    try {
+      const populatedOrder = await Order.findById(order._id).populate('items.product');
+      const pdfBuffer = await generateInvoicePDF(populatedOrder);
+      await sendInvoiceEmail(req.user.id, pdfBuffer);
+      console.log('✅ Invoice sent to user successfully.');
+    } catch (err) {
+      console.error('❌ Error sending invoice email:', err);
+    }
     // NEW ❶ – fire‑and‑forget hand‑off to delivery department
     forwardToDeliveryDept(order).catch(console.error);
 
@@ -113,5 +125,24 @@ router.get('/all', async (req, res) => {
   }
 });
 
+
+// GET /orders/:id/invoice → Generate and download invoice PDF
+router.get('/:id/invoice', authenticateToken, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('items.product');
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    const pdfBuffer = await generateInvoicePDF(order);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${order._id}.pdf`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Error generating invoice PDF:', err);
+    res.status(500).json({ message: 'Failed to generate invoice PDF' });
+  }
+});
 
 module.exports = router;
