@@ -39,6 +39,33 @@ const Profile = () => {
     }
   };
 
+  // CANCEL: Siparişi iptal etmek için handler (user side)
+  const handleCancel = async (orderId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5001/orders/${orderId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || 'Cancel order failed');
+      } else {
+        alert('Order canceled successfully');
+        // Remove canceled order from list
+        setOrders(prev => prev.filter(o => o._id !== orderId));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error.');
+    }
+  };
+
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -113,6 +140,22 @@ const Profile = () => {
                   {order.status}
                 </span>
               </p>
+              {order.status === 'processing' && (
+                <button
+                  onClick={() => handleCancel(order._id)}
+                  style={{
+                    marginTop: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#e67e22',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel Order
+                </button>
+              )}
               {order.status === 'delivered' &&
                 (Date.now() - new Date(order.updatedAt).getTime()) <= 15 * 24 * 60 * 60 * 1000 && (
                 <button
