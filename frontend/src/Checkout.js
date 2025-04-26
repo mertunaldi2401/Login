@@ -1,259 +1,119 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 function Checkout() {
-  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
     setCartItems(storedCart);
   }, []);
 
-
-  // Calculate total quantity and subtotal price
   const totalQuantity = cartItems.length;
   const subtotalPrice = cartItems.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2);
 
-  // Inline styles for the component (preserving black theme)
-  const containerStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',               // allow stacking on small screens
-    justifyContent: 'space-between',
-    backgroundColor: '#000',        // black background
-    color: '#fff',                  // white text for contrast
-    fontFamily: '"Metal Mania", cursive', // site font for consistency
-    minHeight: '100vh',             // full viewport height (if needed to push footer down)
-    padding: '2rem'
-  };
-  const formSectionStyle = {
-    flex: '1 1 400px',              // grow to fill space, minimum width ~400px for form
-    marginRight: '2rem'             // gap between form and summary
-  };
-  const summarySectionStyle = {
-    flex: '0 0 300px',              // do not grow, fixed width for summary (adjust as needed)
-    backgroundColor: 'rgba(255,255,255,0.1)', // translucent panel on dark background
-    borderRadius: '8px',
-    padding: '1.5rem',
-    marginTop: '1.5rem',            // some top margin in case it wraps under form on mobile
-    height: 'fit-content'           // so it wraps its content height (to not stretch full height of container)
-  };
   const inputStyle = {
     width: '100%',
-    padding: '0.75rem',
-    margin: '0.5rem 0',            // space between fields
-    backgroundColor: '#333',       // dark input background to match theme
-    color: '#fff',                 // light text for contrast
-    border: 'none',
-    borderRadius: '4px',
-    fontSize: '1rem'
+    padding: '10px',
+    margin: '10px 0',
+    borderRadius: '5px',
+    border: '1px solid #ccc',
+    backgroundColor: '#1e1e1e',
+    color: 'white'
   };
+
   const labelStyle = {
-    display: 'block',
-    marginBottom: '0.25rem',
-    fontWeight: '500'             // semi-bold labels for readability
-  };
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    marginTop: '1rem',
-    background: 'linear-gradient(45deg, #ff0000, #990000)',  // red gradient
-    border: 'none',
-    borderRadius: '4px',
-    color: '#fff',
-    fontSize: '1rem',
     fontWeight: 'bold',
-    cursor: 'pointer',
-    textAlign: 'center'
-    // (Hover effect added via onMouseEnter/Leave in JSX below)
+    marginTop: '10px',
+    display: 'block',
+    fontFamily: 'Metal Mania'
   };
 
-  // Additional styling for responsive tweaks (optional):
-  // e.g., we could adjust flexDirection for very narrow screens via JS or add media queries in a styled-jsx block.
-  // NEW FUNCTION: Place order when clicking Proceed to Payment
-  const handlePlaceOrder = async () => {
-    try {
-      setIsPlacingOrder(true);
-      const token = localStorage.getItem('token');
-
-      const res = await axios.post('http://localhost:5001/orders', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const order = res.data.order;
-      console.log('Order created:', order);
-
-      // Clear the cart in localStorage
-      localStorage.removeItem('cart');
-
-      // ✅ Redirect to Invoice page
-      navigate(`/invoice/${order._id}`);
-    } catch (err) {
-      console.error('Error placing order:', err);
-      alert('Failed to place order. Please try again.');
-    } finally {
-      setIsPlacingOrder(false);
-    }
+  const sectionStyle = {
+    marginBottom: '20px'
   };
 
-  // Render the checkout form and summary
+  const handleMakePayment = () => {
+    navigate('/receipt'); // ✅ Navigate to receipt page
+  };
+
   return (
-    <div style={containerStyle}>
-      {/* Left Section: Checkout Form */}
-      <div style={formSectionStyle}>
-        <h2>Checkout</h2>
-        <form onSubmit={(e) => e.preventDefault() /* prevent form refresh, no real submit yet */}>
-          {/* Name fields in one row */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>First Name</label>
-              <input 
-                type="text" 
-                name="firstName" 
-                required 
-                style={inputStyle} 
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Last Name</label>
-              <input 
-                type="text" 
-                name="lastName" 
-                required 
-                style={inputStyle} 
-              />
-            </div>
-          </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', color: 'white', backgroundColor: 'black', padding: '2rem' }}>
+      <div style={{ flex: 1, paddingRight: '2rem', maxWidth: '700px' }}>
+        <h2 style={{ fontFamily: 'Metal Mania', marginBottom: '1.5rem' }}>Checkout</h2>
 
-          {/* Street Address */}
-          <div>
+        <form>
+          <div style={sectionStyle}>
             <label style={labelStyle}>Street Address</label>
-            <input 
-              type="text" 
-              name="address" 
-              required 
-              style={inputStyle} 
-            />
+            <input type="text" placeholder="123 Main St" style={inputStyle} required />
           </div>
 
-          {/* Apartment/Suite (optional) */}
-          <div>
-            <label style={labelStyle}>Apartment/Suite <span style={{ fontWeight: 'normal' }}>(optional)</span></label>
-            <input 
-              type="text" 
-              name="address2" 
-              placeholder="Apartment, suite, unit, etc." 
-              style={inputStyle} 
-            />
-          </div>
-
-          {/* Town/City and Postal Code in one row */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', ...sectionStyle }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Town/City</label>
-              <input 
-                type="text" 
-                name="city" 
-                required 
-                style={inputStyle} 
-              />
+              <input type="text" placeholder="Your city" style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Postal Code</label>
-              <input 
-                type="text" 
-                name="postalCode" 
-                required 
-                style={inputStyle} 
-              />
+              <input type="text" placeholder="ZIP / Postal" style={inputStyle} required />
             </div>
           </div>
 
-          {/* Province/Region and Country in one row */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', ...sectionStyle }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Province/Region</label>
-              <input 
-                type="text" 
-                name="province" 
-                required 
-                style={inputStyle} 
-              />
+              <input type="text" placeholder="Region" style={inputStyle} required />
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Country</label>
-              <select name="country" required style={{ ...inputStyle, appearance: 'none' }}>
-                {/* Country dropdown options (just a couple for example) */}
+              <select style={inputStyle} required>
                 <option value="">Select Country</option>
                 <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="UK">United Kingdom</option>
-                {/* ...other countries */}
+                <option value="TR">Turkey</option>
+                <option value="DE">Germany</option>
               </select>
             </div>
           </div>
 
-          {/* Phone Number */}
-          <div>
-            <label style={labelStyle}>Phone Number</label>
-            <input 
-              type="tel" 
-              name="phone" 
-              required 
-              style={inputStyle} 
-            />
+          <hr style={{ margin: '2rem 0', borderColor: '#333' }} />
+
+          <div style={sectionStyle}>
+            <label style={labelStyle}>Cardholder Name</label>
+            <input type="text" placeholder="Full name on card" style={inputStyle} required />
           </div>
 
-          {/* Email Address */}
-          <div>
-            <label style={labelStyle}>Email Address</label>
-            <input 
-              type="email" 
-              name="email" 
-              required 
-              style={inputStyle} 
-            />
+          <div style={sectionStyle}>
+            <label style={labelStyle}>Card Number</label>
+            <input type="text" placeholder="1234 5678 9012 3456" style={inputStyle} required />
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', ...sectionStyle }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Expiration Date</label>
+              <input type="text" placeholder="MM/YY" style={inputStyle} required />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>CVV</label>
+              <input type="password" placeholder="123" style={inputStyle} required />
+            </div>
           </div>
         </form>
       </div>
 
-      {/* Right Section: Order Summary */}
-      {/* Right Section: Order Summary */}
-      <div style={summarySectionStyle}>
-        <h3>Order Summary</h3>
-        {cartItems.length === 0 ? (
-          <p>Your cart is empty.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0' }}>
-            {cartItems.map((item, index) => (
-              <li key={index} style={{ marginBottom: '0.5rem' }}>
-                <span>{item.name}</span> – <span>${item.price?.toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {cartItems.length > 0 && (
-          <div style={{ marginTop: '1rem' }}>
-            <p><strong>Total items:</strong> {totalQuantity}</p>
-            <p><strong>Subtotal:</strong> ${subtotalPrice}</p>
-          </div>
-        )}
-        {/* Proceed to Payment button */}
-        <button 
-          type="button" 
-          style={buttonStyle}
-          onClick={handlePlaceOrder}  // ✅ CLICK to place order and redirect
-          disabled={isPlacingOrder}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff3333, #cc0000)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff0000, #990000)'}
+      <div style={{ backgroundColor: '#1e1e1e', padding: '1.5rem', borderRadius: '10px', width: '300px', height: 'fit-content' }}>
+        <h3 style={{ fontFamily: 'Metal Mania', marginBottom: '1rem' }}>Order Summary</h3>
+        {cartItems.map((item, index) => (
+          <div key={index}>{item.name} - ${item.price}</div>
+        ))}
+        <p style={{ marginTop: '1rem' }}>Total items: {totalQuantity}</p>
+        <p>Subtotal: ${subtotalPrice}</p>
+
+        <button
+          style={{ backgroundColor: 'red', color: 'white', padding: '0.75rem', borderRadius: '5px', fontWeight: 'bold', width: '100%', marginTop: '1rem', border: 'none' }}
+          onClick={handleMakePayment}
         >
-          Proceed to Payment
-          {isPlacingOrder ? 'Placing Order...' : 'Proceed to Payment'}
+          Make Payment
         </button>
       </div>
     </div>

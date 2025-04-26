@@ -6,9 +6,8 @@ import { Link, useLocation } from 'react-router-dom';
 
 function MainPage({ searchQuery }) {
   const { auth } = useContext(AuthContext);
-  const username = auth.user ? auth.user : 'Guest';
+  const username = auth?.user || 'Guest';
 
-  // ✅ Extract category filter from the URL
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const categoryQuery = params.get('category') || '';
@@ -19,7 +18,9 @@ function MainPage({ searchQuery }) {
     padding: '3rem 2rem',
     color: '#fff',
     fontFamily: '"Metal Mania", cursive',
-    position: 'relative'
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
   };
 
   const headerStyle = {
@@ -40,10 +41,13 @@ function MainPage({ searchQuery }) {
   };
 
   const productsContainerStyle = {
+    width: '100%',
+    maxWidth: '1000px',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: '2rem',
     borderRadius: '8px',
-    boxShadow: '0 0 15px rgba(0,0,0,0.5)'
+    boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+    textAlign: 'center'
   };
 
   const cartButtonStyle = {
@@ -68,13 +72,12 @@ function MainPage({ searchQuery }) {
       </header>
 
       <section style={productsContainerStyle}>
-        {/* ✅ Pass category and search to Products */}
+        {/* Pass category and search to Products */}
         <Products searchQuery={searchQuery} categoryFilter={categoryQuery} />
-        <div style={{ textAlign: 'center' }}>
-          <Link to="/cart">
-            <button style={cartButtonStyle}>Go to Cart</button>
-          </Link>
-        </div>
+
+        <Link to="/cart">
+          <button style={cartButtonStyle}>Go to Cart</button>
+        </Link>
       </section>
     </div>
   );

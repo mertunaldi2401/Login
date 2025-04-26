@@ -8,11 +8,11 @@ import Register from './Register';
 import Products from './Products';
 import ProductDetail from './ProductDetail';
 import Cart from './Cart';
+import Receipt from './Receipt';
 import Checkout from './Checkout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import InvoicePage from './InvoicePage'; 
-
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
@@ -163,7 +163,7 @@ function App() {
           </select>
         </div>
 
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {isAuthenticated ? (
             <>
               <span style={{ marginRight: '1em' }}>
@@ -228,6 +228,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/receipt" element={<Receipt />} />
         <Route path="/invoice/:orderId" element={<InvoicePage />} />
       </Routes>
     </div>
