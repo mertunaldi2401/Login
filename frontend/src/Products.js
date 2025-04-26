@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const products = [
+  export const products =[
   {
     id: 1,
     name: 'Fender Stratocaster',
