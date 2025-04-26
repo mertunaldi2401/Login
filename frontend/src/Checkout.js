@@ -1,14 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function Checkout() {
-  // State for cart items (retrieved from localStorage for this example)
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   useEffect(() => {
-    // Load cart items from localStorage on component mount
     const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
     setCartItems(storedCart);
   }, []);
+
 
   // Calculate total quantity and subtotal price
   const totalQuantity = cartItems.length;
@@ -69,6 +73,33 @@ function Checkout() {
 
   // Additional styling for responsive tweaks (optional):
   // e.g., we could adjust flexDirection for very narrow screens via JS or add media queries in a styled-jsx block.
+  // NEW FUNCTION: Place order when clicking Proceed to Payment
+  const handlePlaceOrder = async () => {
+    try {
+      setIsPlacingOrder(true);
+      const token = localStorage.getItem('token');
+
+      const res = await axios.post('http://localhost:5001/orders', {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const order = res.data.order;
+      console.log('Order created:', order);
+
+      // Clear the cart in localStorage
+      localStorage.removeItem('cart');
+
+      // ✅ Redirect to Invoice page
+      navigate(`/invoice/${order._id}`);
+    } catch (err) {
+      console.error('Error placing order:', err);
+      alert('Failed to place order. Please try again.');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   // Render the checkout form and summary
   return (
@@ -192,6 +223,7 @@ function Checkout() {
       </div>
 
       {/* Right Section: Order Summary */}
+      {/* Right Section: Order Summary */}
       <div style={summarySectionStyle}>
         <h3>Order Summary</h3>
         {cartItems.length === 0 ? (
@@ -200,7 +232,6 @@ function Checkout() {
           <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0' }}>
             {cartItems.map((item, index) => (
               <li key={index} style={{ marginBottom: '0.5rem' }}>
-                {/* Each item: name and price. Could also include quantity if applicable */}
                 <span>{item.name}</span> – <span>${item.price?.toFixed(2)}</span>
               </li>
             ))}
@@ -216,10 +247,13 @@ function Checkout() {
         <button 
           type="button" 
           style={buttonStyle}
+          onClick={handlePlaceOrder}  // ✅ CLICK to place order and redirect
+          disabled={isPlacingOrder}
           onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff3333, #cc0000)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff0000, #990000)'}
         >
           Proceed to Payment
+          {isPlacingOrder ? 'Placing Order...' : 'Proceed to Payment'}
         </button>
       </div>
     </div>

@@ -38,6 +38,16 @@ router.post('/', authenticateToken, async (req, res) => {
 
     await order.save(); 
 
+    // Generate invoice and email it
+    try {
+      const populatedOrder = await Order.findById(order._id).populate('items.product');
+      const pdfBuffer = await generateInvoicePDF(populatedOrder);
+      await sendInvoiceEmail(req.user.id, pdfBuffer);
+      console.log('✅ Invoice sent to user successfully.');
+    } catch (err) {
+      console.error('❌ Error sending invoice email:', err);
+    }
+
     // NEW ❶ – fire‑and‑forget hand‑off to delivery department
     forwardToDeliveryDept(order).catch(console.error);
 
