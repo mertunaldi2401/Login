@@ -150,27 +150,25 @@ function App() {
             />
             <FontAwesomeIcon icon={faMagnifyingGlass} style={iconStyle} onClick={handleIconClick} />
           </div>
-
-          <select
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            style={categoryDropdownStyle}
-          >
-            <option value="">Categories</option>
-            <option value="Guitars">Guitars</option>
-            <option value="Effects">Effects</option>
-            <option value="Strings">Strings</option>
-          </select>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {isAuthenticated ? (
             <>
-              <span style={{ marginRight: '1em' }}>
-                Logged in as <b>{auth.user}</b>
-              </span>
-
-              <Link to="/profile" style={{ marginRight: '1rem', fontSize: '1.5rem', color: '#fff' }}>
+              <Link to="/profile" style={{
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: '#d50000',
+                color: '#fff',
+                padding: '0.5rem 1rem',
+                borderRadius: '20px',
+                fontFamily: '"Metal Mania", cursive',
+                fontSize: '1rem',
+                marginRight: '1rem',
+                textDecoration: 'none',
+                gap: '0.5rem'
+              }}>
+                {auth.user}
                 <FontAwesomeIcon icon={faUser} title="Profile" />
               </Link>
 
