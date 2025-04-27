@@ -1,36 +1,50 @@
 const Product = require('../models/Product');
 
+/**
+ * GET /products/search?q=...&category=...
+ * Full‑text search + optional category filter,
+ * sorted by availability then name, excludes __v.
+ */
 exports.searchProducts = async (req, res) => {
   try {
     const { q, category } = req.query;
+
+    // Build Mongo query pieces
     const textFilter = q ? { $text: { $search: q } } : {};
     const categoryFilter = category ? { category } : {};
     const filter = { ...textFilter, ...categoryFilter };
 
-    const products = await Product.find(filter) 
-      .sort({ quantityInStock: -1, stock: -1, name: 1 }) 
+    const products = await Product.find(filter)
+      .sort({ quantityInStock: -1, stock: -1, name: 1 })
       .select('-__v')
       .lean();
 
     res.json(products);
-  } catch (err) { 
+  } catch (err) {
     console.error('Product search error:', err);
-    res.status(500).json({ error: 'Server error searching products.' }); 
+    res.status(500).json({ error: 'Server error searching products.' });
   }
 };
 
+/**
+ * GET /products?category=...
+ * Return all products or by category.
+ */
 exports.getAllProducts = async (req, res) => {
   try {
     const { category } = req.query;
     const filter = category ? { category } : {};
     const products = await Product.find(filter);
-    res.json(products); 
+    res.json(products);
   } catch (err) {
     console.error('Error fetching products:', err);
-    res.status(500).json({ message: 'Error fetching products', error: err.message });
+    resStatus(500).json({ message: 'Error fetching products', error: err.message });
   }
 };
-  
+
+/**
+ * GET /products/:id
+ */
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -42,6 +56,10 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+/**
+ * POST /products
+ * Create a new product
+ */
 exports.createProduct = async (req, res) => {
   const {
     name,
@@ -99,6 +117,10 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+/**
+ * GET /products/categories/distinct
+ * Unique category list
+ */
 exports.getDistinctCategories = async (req, res) => {
   try {
     const categories = await Product.distinct('category');
@@ -109,6 +131,10 @@ exports.getDistinctCategories = async (req, res) => {
   }
 };
 
+/**
+ * GET /products/grouped
+ * Products grouped by category
+ */
 exports.getGroupedProducts = async (req, res) => {
   try {
     const groupedProducts = await Product.aggregate([
