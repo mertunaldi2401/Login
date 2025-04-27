@@ -23,12 +23,23 @@ function Cart() {
     fetchCart();
   }, []);
 
-  const totalPrice = cartItems.reduce((acc, item) => acc + (item.product?.price || 0), 0);
+  const totalPrice = cartItems.reduce(
+    (acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1),
+    0
+  );
 
-  const handleRemoveItem = (indexToRemove) => {
-    const updatedCart = cartItems.filter((_, index) => index !== indexToRemove);
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+  const handleRemoveItem = async (productIdToRemove) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5001/cart/${productIdToRemove}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update frontend after successful delete
+      setCartItems(prevItems => prevItems.filter(item => item.product._id !== productIdToRemove));
+    } catch (err) {
+      console.error('Failed to remove item from cart:', err.response?.data || err.message);
+    }
   };
 
   const containerStyle = {
@@ -47,6 +58,21 @@ function Cart() {
     background: 'rgba(255,255,255,0.1)',
     padding: '1rem',
     marginBottom: '1rem',
+    borderRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  };
+
+  const detailsStyle = {
+    flex: '1',
+    marginRight: '1rem'
+  };
+
+  const imageStyle = {
+    width: '120px',
+    height: '120px',
+    objectFit: 'cover',
     borderRadius: '6px'
   };
 
@@ -85,16 +111,25 @@ function Cart() {
       ) : (
         cartItems.map((item, index) => (
           <div key={index} style={itemStyle}>
-            <h3>{item.product?.name}</h3>
-            <p>Model: {item.product?.model}</p>
-            <p>Serial: {item.product?.serialNumber}</p>
-            <p>Price: ${item.product?.price?.toFixed(2)}</p>
-            <button
-              style={removeButtonStyle}
-              onClick={() => handleRemoveItem(index)}
-            >
-              Remove From Cart
-            </button>
+            <div style={detailsStyle}>
+              <h3>{item.product?.name}</h3>
+              <p>Model: {item.product?.model}</p>
+              <p>Serial: {item.product?.serialNumber}</p>
+              <p>Quantity: {item.quantity}</p>
+              <p>Price per item: ${item.product?.price?.toFixed(2)}</p>
+              <p>Subtotal: ${(item.product?.price * item.quantity).toFixed(2)}</p>
+              <button
+                style={removeButtonStyle}
+                onClick={() => handleRemoveItem(item.product._id)}
+              >
+                Remove From Cart
+              </button>
+            </div>
+
+            {/* ✅ Image to the right */}
+            {item.product?.image && (
+              <img src={item.product.image} alt={item.product.name} style={imageStyle} />
+            )}
           </div>
         ))
       )}

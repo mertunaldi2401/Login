@@ -1,3 +1,4 @@
+// ✅ ProductDetail.js (buttons below quantity)
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReviewSection from './ReviewSection';
@@ -10,9 +11,10 @@ function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    fetch(`http://localhost:5001/products/${id}`) // <-- Tek ürünü çekiyoruz
+    fetch(`http://localhost:5001/products/${id}`)
       .then(res => res.json())
       .then(data => {
         setProduct(data);
@@ -29,7 +31,7 @@ function ProductDetail() {
       const token = localStorage.getItem('token');
       await axios.post('http://localhost:5001/cart', {
         productId: product._id,
-        quantity: 1
+        quantity: quantity
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -37,14 +39,13 @@ function ProductDetail() {
       });
   
       setAddedToCart(true);
-      alert('✅ Product added to cart successfully!');
+      alert(`✅ Added ${quantity} item(s) to cart successfully!`);
     } catch (err) {
       console.error('❌ Backend cart update failed:', err.response?.data || err.message);
       alert('Failed to add product to cart.');
     }
   };
 
-  // Styles (seninkileri aynen korudum)
   const detailContainerStyle = { padding: '2rem', color: '#fff', backgroundColor: '#000', minHeight: '100vh' };
   const contentStyle = { display: 'flex', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' };
   const imageStyle = { width: '400px', height: 'auto', borderRadius: '6px' };
@@ -54,8 +55,9 @@ function ProductDetail() {
   const titleStyle = { fontSize: '2rem', marginBottom: '0.5rem' };
   const modelStyle = { fontStyle: 'italic', marginBottom: '1rem' };
   const priceStyle = { fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' };
-  const buttonStyle = { background: 'rgba(255, 0, 0, 0.6)', padding: '0.8rem 1.2rem', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', marginRight: '1rem' };
+  const buttonStyle = { background: 'rgba(255, 0, 0, 0.6)', padding: '0.8rem 1.2rem', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', marginTop: '1rem', marginRight: '1rem' };
   const backButtonStyle = { ...buttonStyle, background: 'rgba(255, 255, 255, 0.3)' };
+  const selectStyle = { padding: '0.5rem', marginTop: '1rem', borderRadius: '4px', fontSize: '1rem', background: '#fff', color: '#000' };
 
   if (loading) {
     return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Loading product...</p>;
@@ -80,30 +82,51 @@ function ProductDetail() {
             <h1 style={titleStyle}>{product.name}</h1>
             <h2 style={modelStyle}>Model: {product.model}</h2>
             <p>Serial: {product.serialNumber}</p>
-            <p style={priceStyle}>Price: ${product.price}</p>
+            <h2>Description: {product.description}</h2>
+            <h2 style={priceStyle}>Price: ${product.price}</h2>
+            <p>Stock: {product.quantityInStock}</p>
+            
 
-            {product.quantityInStock > 0 ? (
-              addedToCart ? (
-                <span style={{ color: 'limegreen', fontWeight: 'bold', marginRight: '1rem' }}>
-                  Added to Cart
-                </span>
-              ) : (
-                <button style={buttonStyle} onClick={addToCart}>
-                  Add to Cart
-                </button>
-              )
-            ) : (
-              <span style={{ color: 'red', fontWeight: 'bold', marginRight: '1rem' }}>
-                Out of Stock
-              </span>
+            {/* Quantity Selection */}
+            {product.quantityInStock > 0 && (
+              <select
+                style={selectStyle}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value))}
+              >
+                {[...Array(Math.min(product.quantityInStock, 10)).keys()].map(x => (
+                  <option key={x + 1} value={x + 1}>
+                    {x + 1}
+                  </option>
+                ))}
+              </select>
             )}
 
-            <button style={backButtonStyle} onClick={() => navigate(-1)}>
-              Go Back
-            </button>
+            {/* Buttons now BELOW quantity */}
+            <div style={{ marginTop: '1rem' }}>
+              {product.quantityInStock > 0 ? (
+                addedToCart ? (
+                  <span style={{ color: 'limegreen', fontWeight: 'bold', marginRight: '1rem' }}>
+                    Added to Cart
+                  </span>
+                ) : (
+                  <button style={buttonStyle} onClick={addToCart}>
+                    Add to Cart
+                  </button>
+                )
+              ) : (
+                <span style={{ color: 'red', fontWeight: 'bold', marginRight: '1rem' }}>
+                  Out of Stock
+                </span>
+              )}
+
+              <button style={backButtonStyle} onClick={() => navigate(-1)}>
+                Go Back
+              </button>
+            </div>
           </div>
 
-          {/* Review Section fills right side */}
+          {/* Review Section */}
           <div style={reviewStyle}>
             <ReviewSection />
           </div>
