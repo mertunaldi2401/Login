@@ -1,4 +1,4 @@
-// ✅ App.js
+// ✅ Cleaned-up App.js
 import React, { useContext, useState } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
@@ -11,9 +11,9 @@ import Cart from './Cart';
 import Checkout from './Checkout';
 import Admin from './Admin';
 import Profile from './Profile';
+import InvoicePage from './InvoicePage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
-import InvoicePage from './InvoicePage';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
@@ -152,6 +152,7 @@ function App() {
             <FontAwesomeIcon icon={faMagnifyingGlass} style={iconStyle} onClick={handleIconClick} />
           </div>
 
+          {/* ✅ Only Category Dropdown (No sorting dropdown anymore) */}
           <select
             value={selectedCategory}
             onChange={handleCategoryChange}

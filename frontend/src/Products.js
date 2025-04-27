@@ -1,12 +1,15 @@
+// ✅ Products.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons'; // 🔥 Correct import
 
-function Products({ searchQuery = '', categoryFilter = '' }) {
+function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSortOrder }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5001/products') // Buradan database ürünlerini çekiyoruz
+    fetch('http://localhost:5001/products')
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
@@ -20,12 +23,13 @@ function Products({ searchQuery = '', categoryFilter = '' }) {
 
   const search = searchQuery.toLowerCase();
 
-  const filteredProducts = products.filter((product) => {
+  let filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(search) ||
       (product.model && product.model.toLowerCase().includes(search)) ||
       (product.serialNumber && product.serialNumber.toLowerCase().includes(search)) ||
-      product.category.toLowerCase().includes(search);
+      product.category.toLowerCase().includes(search) ||
+      (product.description && product.description.toLowerCase().includes(search));
 
     const matchesCategory =
       !categoryFilter ||
@@ -34,48 +38,55 @@ function Products({ searchQuery = '', categoryFilter = '' }) {
     return matchesSearch && matchesCategory;
   });
 
-  const groupedProducts = filteredProducts.reduce((groups, product) => {
-    const { category } = product;
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(product);
-    return groups;
-  }, {});
+  // ✅ Sorting
+  if (sortOrder === 'high-to-low') {
+    filteredProducts.sort((a, b) => b.price - a.price);
+  } else if (sortOrder === 'low-to-high') {
+    filteredProducts.sort((a, b) => a.price - b.price);
+  }
 
   const containerStyle = {
-    padding: '20px',
+    marginTop: '3rem',
     fontFamily: '"Metal Mania", cursive',
-    color: '#fff'
+    color: '#fff',
+    position: 'relative'
   };
 
-  const mainTitleStyle = {
+  const titleStyle = {
     textAlign: 'center',
-    marginBottom: '30px',
+    marginBottom: '1rem',
     fontSize: '3rem',
     fontWeight: 'bold',
     textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
   };
 
-  const categorySectionStyle = {
-    marginBottom: '40px',
-    borderRadius: '8px',
-    padding: '10px',
-    background: '#333'
+  const sortContainerStyle = {
+    position: 'absolute',
+    top: '0',
+    right: '0',
+    display: 'flex',
+    alignItems: 'center',
+    marginRight: '1rem'
   };
 
-  const categoryTitleStyle = {
-    textTransform: 'uppercase',
-    fontSize: '1.8rem',
-    marginBottom: '10px',
-    textAlign: 'center',
-    textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
+  const sortDropdownStyle = {
+    backgroundColor: '#111',
+    color: '#fff',
+    border: '1px solid #d50000',
+    padding: '0.5rem',
+    fontSize: '1rem',
+    borderRadius: '5px',
+    fontFamily: '"Metal Mania", cursive',
+    cursor: 'pointer',
+    marginLeft: '0.5rem'
   };
 
   const productsWrapperStyle = {
     display: 'flex',
     flexWrap: 'wrap',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginTop: '3rem'
+    
   };
 
   const productCardStyle = {
@@ -124,41 +135,49 @@ function Products({ searchQuery = '', categoryFilter = '' }) {
 
   return (
     <div style={containerStyle}>
-      <h1 style={mainTitleStyle}>THOR'S EPIC COLLECTION</h1>
-      {Object.keys(groupedProducts).length === 0 ? (
+      {/* Title */}
+      <h1 style={titleStyle}>THOR'S EPIC COLLECTION</h1>
+
+      {/* Sort Dropdown */}
+      <div style={sortContainerStyle}>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          style={sortDropdownStyle}
+        >
+          <option value="">Featured</option>
+          <option value="high-to-low">Price: High to Low</option>
+          <option value="low-to-high">Price: Low to High</option>
+        </select>
+        <FontAwesomeIcon icon={faArrowsUpDown} style={{ color: '#fff', fontSize: '1.5rem', marginLeft: '0.5rem' }} />
+      </div>
+
+      {filteredProducts.length === 0 ? (
         <p style={{ textAlign: 'center', fontSize: '1.2rem' }}>
           No products match your search or category selection.
         </p>
       ) : (
-        Object.keys(groupedProducts).map((category) => (
-          <div
-            key={category}
-            style={categorySectionStyle}
-          >
-            <h2 style={categoryTitleStyle}>{category}</h2>
-            <div style={productsWrapperStyle}>
-              {groupedProducts[category].map((product) => (
-                <Link
-                  key={product._id}
-                  to={`/product/${product._id}`}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  <div
-                    style={productCardStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                  >
-                    <img src={product.image} alt={product.name} style={productImageStyle} />
-                    <h3 style={productNameStyle}>{product.name}</h3>
-                    <p style={productModelStyle}>Model: {product.model}</p>
-                    <p style={productSerialStyle}>Serial: {product.serialNumber}</p>
-                    <p style={productSerialStyle}>Price: ${product.price}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))
+        <div style={productsWrapperStyle}>
+          {filteredProducts.map((product) => (
+            <Link
+              key={product._id}
+              to={`/product/${product._id}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <div
+                style={productCardStyle}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                <img src={product.image} alt={product.name} style={productImageStyle} />
+                <h3 style={productNameStyle}>{product.name}</h3>
+                <p style={productModelStyle}>Model: {product.model}</p>
+                <p style={productSerialStyle}>Serial: {product.serialNumber}</p>
+                <p style={productSerialStyle}>Price: ${product.price?.toFixed(2)}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

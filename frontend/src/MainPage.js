@@ -1,5 +1,5 @@
 // ✅ MainPage.js
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import Products from './Products';
 import { Link, useLocation } from 'react-router-dom';
@@ -7,11 +7,11 @@ import { Link, useLocation } from 'react-router-dom';
 function MainPage({ searchQuery }) {
   const { auth } = useContext(AuthContext);
   const username = auth.user ? auth.user : 'Guest';
-
-  // ✅ Extract category filter from the URL
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const categoryQuery = params.get('category') || '';
+
+  const [sortOrder, setSortOrder] = useState('');
 
   const pageStyle = {
     background: 'linear-gradient(135deg, #2a2a2a, #111)',
@@ -40,10 +40,11 @@ function MainPage({ searchQuery }) {
   };
 
   const productsContainerStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    background: 'linear-gradient(135deg, #d50000, #111)', // ✅ Red background for products box
     padding: '2rem',
     borderRadius: '8px',
-    boxShadow: '0 0 15px rgba(0,0,0,0.5)'
+    boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+    position: 'relative'
   };
 
   const cartButtonStyle = {
@@ -68,8 +69,14 @@ function MainPage({ searchQuery }) {
       </header>
 
       <section style={productsContainerStyle}>
-        {/* ✅ Pass category and search to Products */}
-        <Products searchQuery={searchQuery} categoryFilter={categoryQuery} />
+        {/* ✅ Pass sortOrder and setSortOrder to Products */}
+        <Products
+          searchQuery={searchQuery}
+          categoryFilter={categoryQuery}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+        />
+
         <div style={{ textAlign: 'center' }}>
           <Link to="/cart">
             <button style={cartButtonStyle}>Go to Cart</button>
