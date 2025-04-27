@@ -1,8 +1,8 @@
-// ✅ Products.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons'; // 🔥 Correct import
+import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons';
+import StarRating from './StarRating';
 
 function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSortOrder }) {
   const [products, setProducts] = useState([]);
@@ -38,7 +38,6 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     return matchesSearch && matchesCategory;
   });
 
-  // ✅ Sorting
   if (sortOrder === 'high-to-low') {
     filteredProducts.sort((a, b) => b.price - a.price);
   } else if (sortOrder === 'low-to-high') {
@@ -86,7 +85,6 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginTop: '3rem'
-    
   };
 
   const productCardStyle = {
@@ -94,7 +92,7 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     margin: '10px',
     padding: '15px',
     width: '220px',
-    height: '450px',
+    height: '500px',
     textAlign: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     color: '#fff',
@@ -135,10 +133,8 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
 
   return (
     <div style={containerStyle}>
-      {/* Title */}
       <h1 style={titleStyle}>THOR'S EPIC COLLECTION</h1>
 
-      {/* Sort Dropdown */}
       <div style={sortContainerStyle}>
         <select
           value={sortOrder}
@@ -171,6 +167,20 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
               >
                 <img src={product.image} alt={product.name} style={productImageStyle} />
                 <h3 style={productNameStyle}>{product.name}</h3>
+
+                {/* ⭐ Pretty Rating Display */}
+                <div style={{ marginTop: '0.5rem' }}>
+                  <StarRating rating={product.averageRating || 0} editable={false} />
+                  <div style={{ fontSize: '1rem', marginTop: '0.2rem' }}>
+                    {product.averageRating ? `${product.averageRating}` : 'No rating yet'}
+                  </div>
+                  {product.numReviews > 0 && (
+                    <div style={{ fontSize: '0.8rem', color: '#bbb' }}>
+                      ({product.numReviews} Reviews)
+                    </div>
+                  )}
+                </div>
+
                 <p style={productModelStyle}>Model: {product.model}</p>
                 <p style={productSerialStyle}>Serial: {product.serialNumber}</p>
                 <p style={productSerialStyle}>Price: ${product.price?.toFixed(2)}</p>
