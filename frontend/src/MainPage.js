@@ -78,9 +78,11 @@ function MainPage({ searchQuery }) {
         />
 
         <div style={{ textAlign: 'center' }}>
-          <Link to="/cart">
-            <button style={cartButtonStyle}>Go to Cart</button>
-          </Link>
+          {(auth.token || localStorage.getItem('guestId')) && (
+            <Link to="/cart">
+              <button style={cartButtonStyle}>Go to Cart</button>
+            </Link>
+          )}
         </div>
       </section>
     </div>

@@ -1,4 +1,3 @@
-// ✅ Cleaned-up App.js
 import React, { useContext, useState } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
@@ -206,6 +205,16 @@ function App() {
             </>
           ) : (
             <>
+              {(localStorage.getItem('guestId')) && (
+                <Link
+                  to="/cart"
+                  style={linkButtonStyle}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  Go to Cart
+                </Link>
+              )}
               <Link
                 to="/login"
                 style={linkButtonStyle}

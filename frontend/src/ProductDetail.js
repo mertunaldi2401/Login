@@ -29,14 +29,23 @@ function ProductDetail() {
   const addToCart = async () => {
     try {
       const token = localStorage.getItem('token');
+      let guestId = localStorage.getItem('guestId');
+      let headers = {};
+  
+      if (token) {
+        headers = { Authorization: `Bearer ${token}` };
+      } else {
+        if (!guestId) {
+          guestId = Math.random().toString(36).substring(2);
+          localStorage.setItem('guestId', guestId);
+        }
+        headers = { 'x-guest-session': guestId };
+      }
+  
       await axios.post('http://localhost:5001/cart', {
         productId: product._id,
         quantity: quantity
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      }, { headers });
   
       setAddedToCart(true);
       alert(`✅ Added ${quantity} item(s) to cart successfully!`);

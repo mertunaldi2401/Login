@@ -5,6 +5,17 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function Checkout() {
+  // Helper to get headers for API calls
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    const guestId = localStorage.getItem('guestId');
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    } else if (guestId) {
+      return { 'x-guest-session': guestId };
+    }
+    return {};
+  };
   // State for cart items (retrieved from localStorage for this example)
   const [cartItems, setCartItems] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -13,11 +24,8 @@ function Checkout() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const token = localStorage.getItem('token');
         const res = await axios.get('http://localhost:5001/cart', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getHeaders(),
         });
         setCartItems(res.data.items || []);
       } catch (err) {
@@ -90,14 +98,17 @@ function Checkout() {
 
   // Place Order Handler
   const handlePlaceOrder = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('⚠️ Please login first before placing an order.');
+      navigate('/login');
+      return;
+    }
     try {
       setIsPlacingOrder(true);
-      const token = localStorage.getItem('token');
 
       const res = await axios.post('http://localhost:5001/orders', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getHeaders(),
       });
 
       const order = res.data.order;

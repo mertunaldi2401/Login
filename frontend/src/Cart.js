@@ -10,10 +10,17 @@ function Cart() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
+        const headers = {};
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5001/cart', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const guestId = localStorage.getItem('guestId');
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        } else if (guestId) {
+          headers['x-guest-session'] = guestId;
+        }
+
+        const res = await axios.get('http://localhost:5001/cart', { headers });
         setCartItems(res.data.items || []);
       } catch (err) {
         console.error('Failed to fetch cart:', err.response?.data || err.message);
@@ -30,10 +37,17 @@ function Cart() {
 
   const handleRemoveItem = async (productIdToRemove) => {
     try {
+      const headers = {};
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5001/cart/${productIdToRemove}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const guestId = localStorage.getItem('guestId');
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      } else if (guestId) {
+        headers['x-guest-session'] = guestId;
+      }
+
+      await axios.delete(`http://localhost:5001/cart/${productIdToRemove}`, { headers });
 
       // Update frontend after successful delete
       setCartItems(prevItems => prevItems.filter(item => item.product._id !== productIdToRemove));
