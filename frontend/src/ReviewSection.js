@@ -38,11 +38,12 @@ function ReviewSection() {
 
       console.log('Sending review:', { rating, comment, userId }); // console log ekledim
 
-      await axios.post(`http://localhost:5001/products/${id}/reviews`, 
+      const res = await axios.post(
+        `http://localhost:5001/products/${id}/reviews`,
         {
           rating,
           comment,
-          userId,  // userId'yi ekliyoruz
+          userId, // userId'yi ekliyoruz
         },
         {
           headers: {
@@ -54,7 +55,9 @@ function ReviewSection() {
 
       setRating(0);
       setComment('');
-      alert('Review submitted! Waiting for admin approval.');
+      if (res?.data?.message && res.data.message.includes('Waiting')) {
+        alert(res.data.message); // Yalnızca onay bekleyen yorumlar için göster
+      }
       setRefresh(prev => !prev);
     } catch (err) {
       console.error('Error submitting review:', err.response?.data || err.message);

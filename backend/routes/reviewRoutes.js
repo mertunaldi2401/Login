@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Review = require('../models/Reviews');
+const Product = require('../models/Product');
 const authRequired = require('../middlewares/authMiddleware');
 const verifyDeliveredPurchase = require('../middlewares/verifyDeliveredPurchaseMiddleware');
 const mongoose = require('mongoose');
@@ -12,6 +13,7 @@ router.post(
   verifyDeliveredPurchase, // Ürün teslimatı doğrulaması
   async (req, res) => {
     const { rating, comment } = req.body;
+    const hasComment = comment && comment.trim().length > 0;
     const { productId } = req.params;
     const userId = req.user.id; // req.user.id doğrulama middleware'inden geliyor
 
@@ -28,10 +30,26 @@ router.post(
         userId: new mongoose.Types.ObjectId(userId),
         rating,
         comment,
-        approved: false // Onaylanmamış bir yorum
+        approved: !hasComment // Yorum yoksa (sadece puan) otomatik onayla
       });
 
-      res.status(201).json(newReview); // Yeni yorumu döndürüyoruz
+      // Eğer otomatik onaylandıysa ürünün rating ve numReviews alanlarını güncelle
+      if (newReview.approved) {
+        const approvedReviews = await Review.find({ productId, approved: true });
+        const numReviews = approvedReviews.length;
+        const avgRating =
+          approvedReviews.reduce((sum, r) => sum + r.rating, 0) / numReviews;
+
+        await Product.findByIdAndUpdate(productId, {
+          rating: avgRating,
+          numReviews
+        });
+      }
+
+      const message = hasComment
+        ? 'Review submitted! Waiting for admin approval.'
+        : 'Rating saved successfully.';
+      res.status(201).json({ review: newReview, message });
     } catch (err) {
       console.error('Review create error:', err);
       res.status(500).json({ error: 'Could not save review.' });
