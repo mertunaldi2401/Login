@@ -42,11 +42,14 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     return matchesSearch && matchesCategory;
   });
 
-  // 🔥 Sorting
   if (sortOrder === 'high-to-low') {
     filteredProducts.sort((a, b) => b.price - a.price);
   } else if (sortOrder === 'low-to-high') {
     filteredProducts.sort((a, b) => a.price - b.price);
+  } else if (sortOrder === 'popularity') {
+    filteredProducts.sort((a, b) => (b.numReviews || 0) - (a.numReviews || 0));
+  } else if (sortOrder === 'rating-high-to-low') {
+    filteredProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)); // ✅ Only this
   }
 
   // --- Styles ---
@@ -151,6 +154,8 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
           <option value="">Featured</option>
           <option value="high-to-low">Price: High to Low</option>
           <option value="low-to-high">Price: Low to High</option>
+          <option value="popularity">Most Popular</option> {/* 👈 New Option */}
+          <option value="rating-high-to-low">Highest Rated</option> {/* ✅ New */}
         </select>
         <FontAwesomeIcon icon={faArrowsUpDown} style={{ color: '#fff', fontSize: '1.5rem', marginLeft: '0.5rem' }} />
       </div>

@@ -99,14 +99,7 @@ router.post('/', async (req, res) => {
       cart.items.push({ product: productId, quantity });
     }
 
-    // Persist stock deduction on the product document
-    if (typeof product.quantityInStock === 'number') {
-      product.quantityInStock -= quantity;
-    } else if (typeof product.stock === 'number') {
-      product.stock -= quantity;
-    }
-    await product.save();
-
+   
     await cart.save();
 
     if (guestSessionId) {
@@ -143,15 +136,7 @@ router.delete('/:productId', async (req, res) => {
     }
 
     // Restock the product (handles both `quantityInStock` and `stock`)
-    const product = await Product.findById(productId);
-    if (product) {
-      if (typeof product.quantityInStock === 'number') {
-        product.quantityInStock += itemToRemove.quantity;
-      } else if (typeof product.stock === 'number') {
-        product.stock += itemToRemove.quantity;
-      }
-      await product.save();
-    }
+    
 
     // Remove from cart
     cart.items = cart.items.filter(item => !item.product.equals(productId));
