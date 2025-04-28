@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Cart = require('../models/Cart'); 
 
 const JWT_SECRET = process.env.JWT_SECRET; // Should be from env in production
 
@@ -79,6 +80,33 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '1d' }
     );
+
+    /* ---------- GUEST-CART → USER-CART MERGE ---------- */
+    const guestSessionId = req.headers['x-guest-session'];
+    if (guestSessionId) {
+       const guestCart = await Cart.findOne({ guestSessionId });
+      if (guestCart && guestCart.items.length) {
+        // Find or create user cart
+        let userCart = await Cart.findOne({ user: user._id });
+        if (!userCart) {
+          userCart = new Cart({ user: user._id, items: [] });
+        }
+        // Merge items (sum quantities, avoid duplicates)
+        guestCart.items.forEach(gItem => {
+          const existing = userCart.items.find(
+            ui => ui.product.toString() === gItem.product.toString()
+          );
+          if (existing) {
+            existing.quantity += gItem.quantity;
+          } else {
+            userCart.items.push({ product: gItem.product, quantity: gItem.quantity });
+          }
+        });
+        await userCart.save();
+        await Cart.deleteOne({ _id: guestCart._id });  // remove temp cart
+      }
+    }
+    /* -------------------------------------------------- */
 
     res.json({ message: `Welcome, ${user.username}!`, token });
   } catch (err) {

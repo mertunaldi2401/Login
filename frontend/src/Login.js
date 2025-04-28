@@ -14,9 +14,16 @@ function Login() {
     setError('');
 
     try {
+      // Build headers – attach guest session if it exists
+      const headers = { 'Content-Type': 'application/json' };
+      const guestId = localStorage.getItem('guestId');
+      if (guestId) {
+        headers['x-guest-session'] = guestId;
+      }
+
       const res = await fetch('http://localhost:5001/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ identifier, password })
       });
 
@@ -24,6 +31,7 @@ function Login() {
       if (res.ok) {
         login(identifier, data.token);
         localStorage.setItem('token', data.token);  // ✅ BURAYI EKLEDİK
+        localStorage.removeItem('guestId');
         navigate('/');
       } else {
         setError(data.message);
