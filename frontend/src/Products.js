@@ -1,44 +1,54 @@
-// ✅ Products.js
+// ✅ Products.js (Fixed Search Filtering Fully)
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons'; // 🔥 Correct import
+import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons';
 
 function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSortOrder }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Build server‑side query based on search and category
-    let url = 'http://localhost:5001/products';
-    const params = [];
-    if (searchQuery) params.push(`q=${encodeURIComponent(searchQuery)}`);
-    if (categoryFilter) params.push(`category=${encodeURIComponent(categoryFilter)}`);
-    if (params.length) url += `?${params.join('&')}`;
+    const url = 'http://localhost:5001/products';
 
     setLoading(true);
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        setProducts(data);
+        setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {
         console.error('Failed to fetch products:', err);
+        setProducts([]);
         setLoading(false);
       });
-  }, [searchQuery, categoryFilter]);
+  }, []);
 
-  // After server‑side filtering we simply copy the array
-  let filteredProducts = [...products];
+  // 🔥 Manual Search Filtering
+  const search = searchQuery.toLowerCase();
 
-  // ✅ Sorting
+  let filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(search) ||
+      (product.model && product.model.toLowerCase().includes(search)) ||
+      (product.serialNumber && product.serialNumber.toLowerCase().includes(search)) ||
+      (product.description && product.description.toLowerCase().includes(search)) ||
+      (product.category && product.category.toLowerCase().includes(search));
+
+    const matchesCategory = !categoryFilter || product.category.toLowerCase() === categoryFilter.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
+
+  // 🔥 Sorting
   if (sortOrder === 'high-to-low') {
     filteredProducts.sort((a, b) => b.price - a.price);
   } else if (sortOrder === 'low-to-high') {
     filteredProducts.sort((a, b) => a.price - b.price);
   }
 
+  // --- Styles ---
   const containerStyle = {
     marginTop: '3rem',
     fontFamily: '"Metal Mania", cursive',
@@ -80,7 +90,6 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginTop: '3rem'
-    
   };
 
   const productCardStyle = {
@@ -123,16 +132,15 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     fontSize: '0.9em'
   };
 
+  // --- Return ---
   if (loading) {
     return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Loading products...</p>;
   }
 
   return (
     <div style={containerStyle}>
-      {/* Title */}
       <h1 style={titleStyle}>THOR'S EPIC COLLECTION</h1>
 
-      {/* Sort Dropdown */}
       <div style={sortContainerStyle}>
         <select
           value={sortOrder}
@@ -149,7 +157,7 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
       {filteredProducts.length === 0 ? (
         <p style={{ textAlign: 'center', fontSize: '1.2rem' }}>
           No products match your search or category selection.
-        </p> 
+        </p>
       ) : (
         <div style={productsWrapperStyle}>
           {filteredProducts.map((product) => (

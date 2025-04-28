@@ -84,8 +84,8 @@ function Cart() {
   };
 
   const imageStyle = {
-    width: '120px',
-    height: '120px',
+    width: '240px',
+    height: '240px',
     objectFit: 'cover',
     borderRadius: '6px'
   };
