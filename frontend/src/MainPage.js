@@ -6,7 +6,18 @@ import { Link, useLocation } from 'react-router-dom';
 
 function MainPage({ searchQuery }) {
   const { auth } = useContext(AuthContext);
-  const username = auth.user ? auth.user : 'Guest';
+  // Derive a user‑friendly display name (username) for the welcome banner
+  const displayName = React.useMemo(() => {
+    if (!auth.user) return 'Guest';
+    // Case 1: auth.user is a plain string
+    if (typeof auth.user === 'string') {
+      return auth.user.split('@')[0];
+    }
+    // Case 2: auth.user is an object from backend
+    if (auth.user.username) return auth.user.username;
+    if (auth.user.email) return auth.user.email.split('@')[0];
+    return 'Guest';
+  }, [auth.user]);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const categoryQuery = params.get('category') || '';
@@ -64,7 +75,7 @@ function MainPage({ searchQuery }) {
       <header style={headerStyle}>
         <h1 style={titleStyle}>Rock Your World!</h1>
         <p style={subtitleStyle}>
-          Welcome, {username}! Unleash the riffs with our epic collection of guitars and effects.
+          Welcome, {displayName}! Unleash the riffs with our epic collection of guitars and effects.
         </p>
       </header>
 

@@ -16,6 +16,18 @@ import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
+  // Derive a user‑friendly display name (username) for the navbar
+  const displayName = React.useMemo(() => {
+    if (!auth.user) return '';
+    // Case 1: auth.user is a plain string (e.g., e‑mail)
+    if (typeof auth.user === 'string') {
+      return auth.user.split('@')[0];
+    }
+    // Case 2: auth.user is an object returned from backend/login API
+    if (auth.user.username) return auth.user.username;
+    if (auth.user.email)  return auth.user.email.split('@')[0];
+    return '';
+  }, [auth.user]);
   const isAuthenticated = auth.user !== null;
   const location = useLocation();
   const navigate = useNavigate();
@@ -168,7 +180,7 @@ function App() {
           {isAuthenticated ? (
             <>
               <span style={{ marginRight: '1em' }}>
-                Logged in as <b>{auth.user}</b>
+                Logged in as <b>{displayName}</b>
               </span>
 
               <Link to="/profile" style={{ marginRight: '1rem', fontSize: '1.5rem', color: '#fff' }}>
