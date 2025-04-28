@@ -16,10 +16,14 @@ const cartItemSchema = new mongoose.Schema({
 const cartSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    unique: true,
+    sparse: true          // allow multiple guest carts (user = undefined)
   },
   guestSessionId: {
-    type: String
+    type: String,
+    unique: true,
+    sparse: true          // each guest session gets its own cart
   },
   items: [cartItemSchema]
 }, { timestamps: true });

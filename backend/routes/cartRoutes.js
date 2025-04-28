@@ -72,6 +72,12 @@ router.post('/', async (req, res) => {
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: 'Product not found.' });
 
+    // Support both legacy `stock` and newer `quantityInStock` fields
+    const availableStock =
+      typeof product.quantityInStock === 'number'
+        ? product.quantityInStock
+        : product.stock ?? 0;
+
     let cart = await Cart.findOne(query);
     if (!cart) {
       cart = new Cart({ ...query, items: [] });
@@ -81,8 +87,10 @@ router.post('/', async (req, res) => {
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     const totalRequested = currentQuantity + quantity;
 
-    if (product.stock < totalRequested) {
-      return res.status(400).json({ message: `Only ${product.stock} items available in stock.` });
+    if (availableStock < totalRequested) {
+      return res
+        .status(400)
+        .json({ message: `Only ${availableStock} item(s) available in stock.` });
     }
 
     if (existingItem) {
@@ -90,6 +98,14 @@ router.post('/', async (req, res) => {
     } else {
       cart.items.push({ product: productId, quantity });
     }
+
+    // Persist stock deduction on the product document
+    if (typeof product.quantityInStock === 'number') {
+      product.quantityInStock -= quantity;
+    } else if (typeof product.stock === 'number') {
+      product.stock -= quantity;
+    }
+    await product.save();
 
     await cart.save();
 
@@ -126,10 +142,14 @@ router.delete('/:productId', async (req, res) => {
       return res.status(404).json({ message: 'Product not found in cart.' });
     }
 
-    // Restock the product
+    // Restock the product (handles both `quantityInStock` and `stock`)
     const product = await Product.findById(productId);
     if (product) {
-      product.stock += itemToRemove.quantity;
+      if (typeof product.quantityInStock === 'number') {
+        product.quantityInStock += itemToRemove.quantity;
+      } else if (typeof product.stock === 'number') {
+        product.stock += itemToRemove.quantity;
+      }
       await product.save();
     }
 

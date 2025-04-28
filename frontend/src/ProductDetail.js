@@ -28,15 +28,27 @@ function ProductDetail() {
 
   const addToCart = async () => {
     try {
+      // build request headers: prefer JWT, otherwise fall back to a per‑browser guest id
+      const headers = {};
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5001/cart', {
-        productId: product._id,
-        quantity: quantity
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      } else {
+        // ensure we have a persistent random guest id
+        let guestId = localStorage.getItem('guestId');
+        if (!guestId) {
+          guestId = Math.random().toString(36).substring(2);
+          localStorage.setItem('guestId', guestId);
+        }
+        headers['x-guest-session'] = guestId;
+      }
+
+      await axios.post(
+        'http://localhost:5001/cart',
+        { productId: product._id, quantity },
+        { headers }
+      );
 
       setAddedToCart(true);
       alert(`✅ Added ${quantity} item(s) to cart successfully!`);
