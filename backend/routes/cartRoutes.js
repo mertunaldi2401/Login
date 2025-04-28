@@ -80,7 +80,14 @@ router.post('/', async (req, res) => {
 
     let cart = await Cart.findOne(query);
     if (!cart) {
-      cart = new Cart({ ...query, items: [] });
+      const cartData = { ...query, items: [] };
+      
+      // Very important: if cartData.user is undefined, delete it, to avoid MongoDB unique constraint error
+      if (!cartData.user) {
+        delete cartData.user;
+      }
+      
+      cart = new Cart(cartData);
     }
 
     const existingItem = cart.items.find(item => item.product.equals(productId));
@@ -106,7 +113,7 @@ router.post('/', async (req, res) => {
       res.setHeader('x-guest-session', guestSessionId);
     }
 
-    res.status(200).json({ message: 'Product added to cart.', cart });
+    res.status(200).json({ message: 'Product added to cart.', cart, guestSessionId });
   } catch (err) {
     console.error('Could not add to cart:', err);
     res.status(500).json({ message: 'Failed to add product to cart.' });

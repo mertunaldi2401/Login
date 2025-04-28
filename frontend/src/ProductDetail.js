@@ -44,11 +44,15 @@ function ProductDetail() {
         headers['x-guest-session'] = guestId;
       }
 
-      await axios.post(
+      const res = await axios.post(
         'http://localhost:5001/cart',
         { productId: product._id, quantity },
         { headers }
       );
+
+      if (res.data.guestSessionId) {
+        localStorage.setItem('guestId', res.data.guestSessionId);
+      }
 
       setAddedToCart(true);
       alert(`✅ Added ${quantity} item(s) to cart successfully!`);
