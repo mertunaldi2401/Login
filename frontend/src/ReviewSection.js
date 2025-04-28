@@ -1,109 +1,127 @@
-// ReviewSection.jsx
-import React, { useState } from 'react';
-import StarRating from './StarRating';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';  // Düzeltilmiş import
 
-const ReviewSection = () => {
+function ReviewSection() {
+  const { id } = useParams(); // ürün id'si
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [refresh, setRefresh] = useState(false); // refresh tetikleyici
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (rating === 0 || comment.trim() === '') {
-      alert('Please provide both a rating and a review.');
-      return;
-    }
-
-    const newReview = {
-      id: Date.now(),
-      rating,
-      comment
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5001/products/${id}/reviews`);
+        const approvedReviews = res.data.filter(review => review.approved);
+        setReviews(approvedReviews);
+      } catch (err) {
+        console.error('Failed to fetch reviews:', err);
+      }
     };
 
-    setReviews([...reviews, newReview]);
-    setRating(0);
-    setComment('');
+    fetchReviews();
+  }, [id, refresh]);
+
+  const submitReview = async () => {
+    try {
+      const token = localStorage.getItem('token'); // token burada çekiliyor
+      if (!token) {
+        alert('You need to be logged in to submit a review.');
+        return;
+      }
+
+      // token'ı decode ederek userId'yi alıyoruz
+      const decoded = jwtDecode(token);
+      const userId = decoded.id;
+
+      console.log('Sending review:', { rating, comment, userId }); // console log ekledim
+
+      await axios.post(`http://localhost:5001/products/${id}/reviews`, 
+        {
+          rating,
+          comment,
+          userId,  // userId'yi ekliyoruz
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      setRating(0);
+      setComment('');
+      alert('Review submitted! Waiting for admin approval.');
+      setRefresh(prev => !prev);
+    } catch (err) {
+      console.error('Error submitting review:', err.response?.data || err.message);
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert('Error submitting review.');
+      }
+    }
+  };
+
+  const stars = (starCount) => {
+    return '★'.repeat(starCount) + '☆'.repeat(5 - starCount);
   };
 
   return (
-    <div className="review-section" style={{ color: '#fff' }}>
-      <h3>Review the Product</h3>
-
-      {/* Form for new review */}
-      <form 
-        onSubmit={handleSubmit} 
-        style={{
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1rem', 
-          maxWidth: '400px',
-          marginBottom: '1.5rem'
-        }}
-      >
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Rating:
-          </label>
-          <StarRating rating={rating} setRating={setRating} editable={true} />
-        </div>
-
-        <div>
-          <label 
-            htmlFor="review-comment" 
-            style={{ display: 'block', marginBottom: '0.5rem' }}
+    <div>
+      <h2>Review the Product</h2>
+      <div>
+        <p>Rating:</p>
+        {[1, 2, 3, 4, 5].map(num => (
+          <span
+            key={num}
+            style={{ cursor: 'pointer', fontSize: '24px', color: rating >= num ? 'gold' : 'gray' }}
+            onClick={() => setRating(num)}
           >
-          
-          </label>
-          <textarea
-            id="review-comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Please share your experience here"
-            rows="4"
-            cols="50"
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          style={{
-            background: 'rgba(255, 0, 0, 0.6)',
-            color: '#fff',
-            border: 'none',
-            padding: '0.6rem 1rem',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Submit Review
-        </button>
-      </form>
-
-      {/* Display list of reviews */}
-      <div className="review-list">
-        <h4>All Reviews</h4>
-        {reviews.length === 0 ? (
-          <p>Be the first to review!</p>
-        ) : (
-          reviews.map((review) => (
-            <div 
-              key={review.id} 
-              style={{ 
-                borderBottom: '1px solid #444', 
-                padding: '10px 0' 
-              }}
-            >
-              {/* Reuse StarRating in non-editable mode */}
-              <StarRating rating={review.rating} editable={false} />
-              <p>{review.comment}</p>
-            </div>
-          ))
-        )}
+            ★
+          </span>
+        ))}
       </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Please share your experience here"
+        rows={4}
+        style={{ width: '100%', marginTop: '10px' }}
+      />
+      <button
+        style={{
+          background: '#8B0000',
+          padding: '0.8rem 1.2rem',
+          border: 'none',
+          borderRadius: '4px',
+          color: '#fff',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          fontWeight: 'bold',
+          marginTop: '10px'
+        }}
+        onClick={submitReview}
+      >
+        Submit Review
+      </button>
+
+      <h3 style={{ marginTop: '2rem' }}>All Reviews</h3>
+      {reviews.length === 0 ? (
+        <p>No reviews yet.</p>
+      ) : (
+        reviews.map((review) => (
+          <div key={review._id} style={{ marginBottom: '1rem', borderBottom: '1px solid #ccc', paddingBottom: '1rem' }}>
+            <div style={{ fontSize: '20px', color: 'gold' }}>{stars(review.rating)}</div>
+            <p>{review.comment}</p>
+          </div>
+        ))
+      )}
     </div>
   );
-};
+}
 
 export default ReviewSection;

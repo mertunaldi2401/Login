@@ -1,3 +1,4 @@
+// middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -12,7 +13,15 @@ const authenticateToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    req.user = {
+      id: decoded.id, // Burada id'yi doğru şekilde ayarlıyoruz
+      username: decoded.username,
+      email: decoded.email,
+    };
+
+    // Log to check if user is correctly decoded
+    console.log('Decoded user:', req.user);
+    
     next();
   } catch (err) {
     console.error('Token verification failed:', err);

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 function Admin() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [error, setError] = useState('');
   const [productMessage, setProductMessage] = useState('');
   const [productForm, setProductForm] = useState({
@@ -27,6 +28,14 @@ function Admin() {
       .then(res => res.json())
       .then(data => setOrders(Array.isArray(data) ? data : []))
       .catch(() => console.error('Failed to fetch orders'));
+  }, []);
+
+  // Review fetching - Check this endpoint
+  useEffect(() => {   
+    fetch('http://localhost:5001/reviews/unapproved')  // Make sure this endpoint exists
+      .then(res => res.json())
+      .then(data => setReviews(data))
+      .catch(() => setError('Failed to fetch reviews'));
   }, []);
 
   const deleteUser = async (username) => {
@@ -98,6 +107,17 @@ function Admin() {
       }
     } catch (err) {
       console.error('Error updating order status:', err);
+    }
+  };
+
+  const handleReviewApproval = async (reviewId) => {
+    try {
+      const res = await fetch(`http://localhost:5001/reviews/${reviewId}/approve`, { method: 'PUT' });
+      if (res.ok) {
+        setReviews(prev => prev.filter(review => review._id !== reviewId)); // Remove approved review
+      }
+    } catch (err) {
+      console.error('Error approving review:', err);
     }
   };
 
@@ -211,14 +231,31 @@ function Admin() {
             </div>
           ))
         )}
-        <div style={{ marginTop: '2rem' }}>
-          <button onClick={handleBack} style={{
-            background: '#34495e', color: '#fff', padding: '0.5rem 1rem',
-            border: 'none', borderRadius: '5px', cursor: 'pointer'
-          }}>
-            ⬅ Back to Login
-          </button>
-        </div>
+
+        {/* Admin Comment Approval */}
+        <h3 style={{ marginTop: '2rem' }}>Review Management</h3>
+        {reviews.length === 0 ? (
+          <p>No unapproved reviews.</p>
+        ) : (
+          reviews.map(review => (
+            <div key={review._id} style={{
+              background: '#fff', marginBottom: '1rem', padding: '1rem',
+              borderRadius: '5px', boxShadow: '0 0 5px rgba(0,0,0,0.1)'
+            }}>
+              <p><strong>Rating:</strong> {review.rating}</p>
+              <p><strong>Comment:</strong> {review.comment}</p>
+              <button
+                onClick={() => handleReviewApproval(review._id)}
+                style={{
+                  background: '#27ae60', color: '#fff', border: 'none',
+                  padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer'
+                }}
+              >
+                Approve Review
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -22,26 +22,26 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Check stock and calculate total price
     for (const item of cart.items) {
-      if (item.quantity > item.product.stock) {
+      if (item.quantity > item.product.quantityInStock) {
         return res.status(400).json({ message: `Insufficient stock for: ${item.product.name}` });
       }
       totalPrice += item.quantity * item.product.price;
     }
 
-    // Create the order
+    // Create the order correctly
     const order = new Order({
       user: req.user.id,
       items: cart.items.map(item => ({
-        product: item.product._id,
-        quantity: item.quantity
+        product: item.product._id,    // 🔥 SADECE ID GÖNDER
+        quantity: item.quantity,
       })),
-      totalPrice
+      totalPrice, // burada üstte hesapladığın değeri kaydet
+      status: 'processing'
     });
 
-    await order.save(); 
+    await order.save();
 
-    
-    // ➡️ Generate PDF and send email
+    // Generate PDF and send invoice email
     try {
       const populatedOrder = await Order.findById(order._id).populate('items.product');
       const pdfBuffer = await generateInvoicePDF(populatedOrder);
@@ -50,13 +50,14 @@ router.post('/', authenticateToken, async (req, res) => {
     } catch (err) {
       console.error('❌ Error sending invoice email:', err);
     }
-    // NEW ❶ – fire‑and‑forget hand‑off to delivery department
+
+    // Notify delivery department
     forwardToDeliveryDept(order).catch(console.error);
 
     // Decrease product stocks
     for (const item of cart.items) {
       const product = await Product.findById(item.product._id);
-      product.stock -= item.quantity;
+      product.quantityInStock -= item.quantity;
       await product.save();
     }
 
@@ -65,6 +66,7 @@ router.post('/', authenticateToken, async (req, res) => {
     await cart.save();
 
     res.status(201).json({ message: 'Order placed successfully!', order });
+
   } catch (err) {
     console.error('Order error:', err);
     res.status(500).json({ message: 'Failed to create order.' });
@@ -139,7 +141,6 @@ router.get('/all', async (req, res) => {
     res.status(500).json({ message: 'Failed to retrieve orders.' });
   }
 });
-
 
 // GET /orders/:id/invoice → Generate and download invoice PDF
 router.get('/:id/invoice', authenticateToken, async (req, res) => {

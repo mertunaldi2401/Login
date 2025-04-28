@@ -71,9 +71,13 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, username: user.username },
+      { 
+        id: user._id,           // 🛠 BUNU EKLİYORSUN
+        username: user.username, 
+        email: user.email 
+      },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '1d' }
     );
 
     res.json({ message: `Welcome, ${user.username}!`, token });

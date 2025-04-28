@@ -38,8 +38,7 @@ app.use('/cart',    cartRoutes);
 app.use('/orders',  orderRoutes);
 app.use('/products', productRoutes);
 app.use('/admin', adminRoutes);
-
-// app.use('/products', reviewRoutes); // Commented out to avoid double-mounting
+app.use('/products', reviewRoutes); // Commented out to avoid double-mounting
 
 // Base route for sanity check
 app.get('/', (req, res) => {

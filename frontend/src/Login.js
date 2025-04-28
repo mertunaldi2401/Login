@@ -23,6 +23,7 @@ function Login() {
       const data = await res.json();
       if (res.ok) {
         login(identifier, data.token);
+        localStorage.setItem('token', data.token);  // ✅ BURAYI EKLEDİK
         navigate('/');
       } else {
         setError(data.message);

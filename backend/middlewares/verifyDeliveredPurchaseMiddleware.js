@@ -1,25 +1,31 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 
-module.exports = async function verifyDeliveredPurchase(req, res, next) {
+const verifyDeliveredPurchase = async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.id;
+    const productId = new mongoose.Types.ObjectId(req.params.productId); // new doğru oldu ✅
 
-    const deliveredOrder = await Order.exists({
+    console.log('DEBUG - UserID:', userId);
+    console.log('DEBUG - ProductID:', productId);
+
+    const order = await Order.findOne({
       user: userId,
       status: 'delivered',
-      'items.product': productId
+      'items.product': productId,
     });
 
-    if (!deliveredOrder) {
-      return res.status(403).json({
-        error: 'You can rate or comment only after the product is delivered.'
-      });
+    console.log('DEBUG - Found Order:', order);
+
+    if (!order) {
+      return res.status(400).json({ message: 'You can comment after you receive your product.' });
     }
 
     next();
-  } catch (err) {
-    console.error('Delivery‑check error:', err);
-    res.status(500).json({ error: 'Server error validating delivery status.' });
+  } catch (error) {
+    console.error('verifyDeliveredPurchase error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+module.exports = verifyDeliveredPurchase;
