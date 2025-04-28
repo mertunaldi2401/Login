@@ -2,22 +2,13 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controller/productController');
 
-// Search products with optional query
-router.get('/search', productController.searchProducts);
-
-// Get all products (with optional category filter)
+// ✅ Get all products (with average rating and reviews)
 router.get('/', productController.getAllProducts);
 
-// Get single product by ID
+// ✅ Get a single product by ID (with average rating and reviews)
 router.get('/:id', productController.getProductById);
 
-// Create a new product
-router.post('/', productController.createProduct);
-
-// Get distinct categories
-router.get('/categories/list', productController.getDistinctCategories);
-
-// Get products grouped by category
-router.get('/grouped', productController.getGroupedProducts);
+// ❌ Commented out - POST product creation not needed for now
+// router.post('/', productController.createProduct);
 
 module.exports = router;

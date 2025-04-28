@@ -1,7 +1,7 @@
-// ✅ ProductDetail.js (buttons below quantity)
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReviewSection from './ReviewSection';
+import StarRating from './StarRating';
 import axios from 'axios';
 
 function ProductDetail() {
@@ -29,24 +29,15 @@ function ProductDetail() {
   const addToCart = async () => {
     try {
       const token = localStorage.getItem('token');
-      let guestId = localStorage.getItem('guestId');
-      let headers = {};
-  
-      if (token) {
-        headers = { Authorization: `Bearer ${token}` };
-      } else {
-        if (!guestId) {
-          guestId = Math.random().toString(36).substring(2);
-          localStorage.setItem('guestId', guestId);
-        }
-        headers = { 'x-guest-session': guestId };
-      }
-  
       await axios.post('http://localhost:5001/cart', {
         productId: product._id,
         quantity: quantity
-      }, { headers });
-  
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       setAddedToCart(true);
       alert(`✅ Added ${quantity} item(s) to cart successfully!`);
     } catch (err) {
@@ -79,24 +70,33 @@ function ProductDetail() {
   return (
     <div style={detailContainerStyle}>
       <div style={contentStyle}>
-        {/* Product Image */}
         {product.image && (
           <img src={product.image} alt={product.name} style={imageStyle} />
         )}
 
-        {/* Right Side: Info and Review side-by-side */}
         <div style={rightSideStyle}>
-          {/* Product Info */}
           <div style={infoStyle}>
             <h1 style={titleStyle}>{product.name}</h1>
+
+            {/* ⭐ Average Rating */}
+            <div style={{ marginTop: '0.5rem' }}>
+              <StarRating rating={product.averageRating || 0} editable={false} />
+              <div style={{ fontSize: '1.2rem', marginTop: '0.3rem' }}>
+                {product.averageRating ? `${product.averageRating}` : 'No rating yet'}
+              </div>
+              {product.numReviews > 0 && (
+                <div style={{ fontSize: '0.9rem', color: '#bbb' }}>
+                  ({product.numReviews} Reviews)
+                </div>
+              )}
+            </div>
+
             <h2 style={modelStyle}>Model: {product.model}</h2>
             <p>Serial: {product.serialNumber}</p>
             <h2>Description: {product.description}</h2>
             <h2 style={priceStyle}>Price: ${product.price}</h2>
             <p>Stock: {product.quantityInStock}</p>
-            
 
-            {/* Quantity Selection */}
             {product.quantityInStock > 0 && (
               <select
                 style={selectStyle}
@@ -111,7 +111,6 @@ function ProductDetail() {
               </select>
             )}
 
-            {/* Buttons now BELOW quantity */}
             <div style={{ marginTop: '1rem' }}>
               {product.quantityInStock > 0 ? (
                 addedToCart ? (
@@ -135,7 +134,6 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* Review Section */}
           <div style={reviewStyle}>
             <ReviewSection />
           </div>
