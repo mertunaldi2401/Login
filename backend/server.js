@@ -11,6 +11,7 @@ const orderRoutes   = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
 const reviewRoutes  = require('./routes/reviewRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const deliveryRoutes = require('./routes/deliveryRoutes');
 const User = require('./models/User');
 const Cart = require('./models/Cart');
 const Product = require('./models/Product');
@@ -43,6 +44,8 @@ app.use('/products/:productId/reviews', reviewRoutes);
 app.use('/admin', adminRoutes);
 // Category management endpoints
 app.use('/categories', categoryRoutes);
+// Delivery list endpoints
+app.use('/deliveries', deliveryRoutes);
 
 // Base route for sanity check
 app.get('/', (req, res) => {
