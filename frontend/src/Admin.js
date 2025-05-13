@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { AuthContext } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 function Admin() {
@@ -15,6 +16,9 @@ function Admin() {
   });
 
   const navigate = useNavigate();
+
+  const { user } = useContext(AuthContext);
+  const isManager = user?.role === 'product-manager';
 
   useEffect(() => {
     fetch('http://localhost:5001/admin/users')
@@ -96,7 +100,7 @@ function Admin() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const res = await fetch(`http://localhost:5001/orders/${orderId}/status`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
@@ -218,16 +222,22 @@ function Admin() {
             }}>
               <p><strong>User:</strong> {order.user?.username || 'Unknown'}</p>
               <p><strong>Total Price:</strong> ${order.totalPrice}</p>
-              <p><strong>Status:</strong> {order.status}</p>
-              <select
-                value={order.status}
-                onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                style={{ padding: '0.5rem', marginTop: '0.5rem', borderRadius: '4px' }}
-              >
-                <option value="processing">Processing</option>
-                <option value="in-transit">In Transit</option>
-                <option value="delivered">Delivered</option>
-              </select>
+              <p>
+                <strong>Status:</strong>{' '}
+                {isManager ? (
+                  <select
+                    value={order.status}
+                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                    style={{ padding: '0.5rem', marginTop: '0.5rem', borderRadius: '4px' }}
+                  >
+                    <option value="processing">Processing</option>
+                    <option value="in-transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                  </select>
+                ) : (
+                  <span>{order.status}</span>
+                )}
+              </p>
             </div>
           ))
         )}

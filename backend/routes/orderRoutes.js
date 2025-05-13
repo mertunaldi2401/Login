@@ -5,6 +5,7 @@ const authenticateToken = require('../middlewares/authMiddleware');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const mongoose = require('mongoose');
 const { forwardToDeliveryDept } = require('../services/deliveryService');
 const { generateInvoicePDF } = require('../services/invoiceService');
 const { sendInvoiceEmail } = require('../services/emailService');
@@ -103,28 +104,40 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id/status', async (req, res) => {
+router.patch('/:id/status', authenticateToken, async (req, res, next) => {
   try {
     const { status } = req.body;
-
-    if (!['processing', 'in-transit', 'delivered'].includes(status)) {
+    const validStates = ['processing', 'in-transit', 'delivered'];
+    if (!validStates.includes(status)) {
       return res.status(400).json({ message: 'Invalid status value.' });
     }
-
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    ).populate('user', 'username');
-
+    // Role guard
+    if (req.user.role !== 'product-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+    // Validate ID
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+    const order = await Order.findById(id);
     if (!order) {
       return res.status(404).json({ message: 'Order not found.' });
     }
-
-    res.json({ message: 'Order status updated successfully.', order });
+    // Prevent illegal transitions
+    const currentIndex = validStates.indexOf(order.status);
+    const newIndex = validStates.indexOf(status);
+    if (newIndex < currentIndex) {
+      return res.status(400).json({ message: `Illegal status transition from "${order.status}" to "${status}".` });
+    }
+    // Update and respond
+    order.status = status;
+    await order.save();
+    const updated = await Order.findById(id).populate('user', 'username');
+    return res.json({ message: 'Order status updated successfully.', order: updated });
   } catch (err) {
     console.error('Order status update error:', err);
-    res.status(500).json({ message: 'Failed to update order status.' });
+    return res.status(500).json({ message: 'Failed to update order status.' });
   }
 });
 
@@ -158,6 +171,45 @@ router.get('/:id/invoice', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Error generating invoice PDF:', err);
     res.status(500).json({ message: 'Failed to generate invoice PDF' });
+  }
+});
+
+// PATCH /orders/:id/cancel → cancel only when status=processing, restore stock
+router.patch('/:id/cancel', authenticateToken, async (req, res, next) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ message: 'Order not found.' });
+  }
+  const order = await Order.findById(id);
+  if (!order) {
+    return res.status(404).json({ message: 'Order not found.' });
+  }
+  if (order.status !== 'processing') {
+    return res.status(400).json({ message: 'Only orders with status “processing” can be cancelled.' });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    // Restore product stock
+    await Promise.all(
+      order.items.map(item =>
+        Product.findByIdAndUpdate(item.product, { $inc: { quantityInStock: item.quantity } }, { session })
+      )
+    );
+
+    // Cancel order
+    order.status = 'cancelled';
+    await order.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ message: 'Order successfully cancelled.', order });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    next(err);
   }
 });
 

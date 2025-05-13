@@ -10,6 +10,7 @@ const cartRoutes    = require('./routes/cartRoutes');
 const orderRoutes   = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
 const reviewRoutes  = require('./routes/reviewRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 const User = require('./models/User');
 const Cart = require('./models/Cart');
 const Product = require('./models/Product');
@@ -40,6 +41,8 @@ app.use('/products',          productRoutes);
 // mount product-specific reviews under /products/:productId/reviews
 app.use('/products/:productId/reviews', reviewRoutes);
 app.use('/admin', adminRoutes);
+// Category management endpoints
+app.use('/categories', categoryRoutes);
 
 // Base route for sanity check
 app.get('/', (req, res) => {
