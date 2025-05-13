@@ -6,6 +6,7 @@ function Admin() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [deliveries, setDeliveries] = useState([]);
   const [error, setError] = useState('');
   const [productMessage, setProductMessage] = useState('');
   const [productForm, setProductForm] = useState({
@@ -41,6 +42,15 @@ function Admin() {
       .then(data => setReviews(data))
       .catch(() => setError('Failed to fetch reviews'));
   }, []);
+
+  useEffect(() => {
+    if (isManager) {
+      fetch('http://localhost:5001/deliveries')
+        .then(res => res.json())
+        .then(data => setDeliveries(Array.isArray(data) ? data : []))
+        .catch(() => console.error('Failed to fetch deliveries'));
+    }
+  }, [isManager]);
 
   const deleteUser = async (username) => {
     try {
@@ -263,6 +273,27 @@ function Admin() {
               >
                 Approve Review
               </button>
+            </div>
+          ))
+        )}
+
+        {/* Delivery List */}
+        <h3 style={{ marginTop: '2rem' }}>Delivery List</h3>
+        {Array.isArray(deliveries) && deliveries.length === 0 ? (
+          <p>No deliveries scheduled.</p>
+        ) : (
+          deliveries.map(delivery => (
+            <div key={delivery._id} style={{
+              background: '#fff', marginBottom: '1rem', padding: '1rem',
+              borderRadius: '5px', boxShadow: '0 0 5px rgba(0,0,0,0.1)'
+            }}>
+              <p><strong>Delivery ID:</strong> {delivery._id}</p>
+              <p><strong>Customer ID:</strong> {delivery.customer._id}</p>
+              <p><strong>Product ID:</strong> {delivery.product._id}</p>
+              <p><strong>Quantity:</strong> {delivery.quantity}</p>
+              <p><strong>Total Price:</strong> ${delivery.totalPrice}</p>
+              <p><strong>Address:</strong> {delivery.address}</p>
+              <p><strong>Completed:</strong> {delivery.completed ? 'Yes' : 'No'}</p>
             </div>
           ))
         )}
