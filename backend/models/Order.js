@@ -9,7 +9,8 @@ const orderItemSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: true
-  }
+  },
+  price   : { type: Number, required: true }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -27,7 +28,13 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['processing', 'in-transit', 'delivered'],
     default: 'processing'
-  }
+  },
+  // --- Refund alanları (Feature 5) ---
+  refundRequested   : { type: Boolean, default: false },
+  refundStatus      : { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  refundReason      : { type: String },       // müşterinin sebebi
+  refundDecisionNote: { type: String },       // satış yöneticisinin yorumu
+  refundDecisionDate: { type: Date }   
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

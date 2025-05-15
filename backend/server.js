@@ -20,6 +20,10 @@ const { forwardToDeliveryDept } = require('./services/deliveryService');
 const productController = require('./controller/productController');
 const adminRoutes = require('./routes/adminRoutes');
 
+const wishlistRoutes = require('./routes/wishlistRoutes');
+const salesManagerRoutes = require('./routes/salesManagerRoutes');
+
+
 
 const app  = express();
 const PORT = process.env.PORT || 5001;          
@@ -46,6 +50,9 @@ app.use('/admin', adminRoutes);
 app.use('/categories', categoryRoutes);
 // Delivery list endpoints
 app.use('/deliveries', deliveryRoutes);
+
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/sales', salesManagerRoutes);
 
 // Base route for sanity check
 app.get('/', (req, res) => {
