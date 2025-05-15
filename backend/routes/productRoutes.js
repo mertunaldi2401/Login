@@ -11,8 +11,19 @@ router.get('/', productController.getAllProducts);
 // ✅ Get a single product by ID (with average rating and reviews)
 router.get('/:id', productController.getProductById);
 
-// ❌ Commented out - POST product creation not needed for now
-// router.post('/', productController.createProduct);
+// Add a new product (product-manager only)
+router.post(
+  '/',
+  authenticateToken,
+  productController.createProduct
+);
+
+// Delete a product (product-manager only)
+router.delete(
+  '/:id',
+  authenticateToken,
+  productController.deleteProduct
+);
 
 // PATCH /products/:id/stock → update stock, only product-manager
 router.patch(

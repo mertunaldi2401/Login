@@ -71,34 +71,93 @@ router.get('/:productId/reviews', async (req, res) => {
   }
 });
 
-// Admin review onaylama route
-router.put('/:reviewId/approve', async (req, res) => {
-  try {
-    const review = await Review.findById(req.params.reviewId);
-    if (!review) {
-      return res.status(404).json({ message: 'Review not found.' });
+// Get all unapproved reviews for Admin
+router.get(
+  '/unapproved',
+  authRequired,
+  async (req, res, next) => {
+    // Role guard
+    if (req.user.role !== 'product-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
     }
-    review.approved = true; // Onayla
-    await review.save(); // Onaylı olarak kaydediyoruz
-
-    res.json({ message: 'Review approved successfully.' });
-  } catch (err) {
-    console.error('Review approve error:', err);
-    res.status(500).json({ error: 'Failed to approve review.' });
+    try {
+      const reviews = await Review.find({ approved: false })
+        .populate('productId', 'name')
+        .populate('userId', 'username');
+      res.status(200).json(reviews);
+    } catch (err) {
+      console.error('Error fetching unapproved reviews:', err);
+      res.status(500).json({ error: 'Failed to fetch unapproved reviews.' });
+    }
   }
-});
+);
 
-// Onaylı ve onaysız tüm yorumları getiren bir route (Admin için)
-router.get('/:productId/all-reviews', async (req, res) => {
-  const { productId } = req.params;
-
-  try {
-    const reviews = await Review.find({ productId }); // Hem onaylı hem de onaysız yorumlar
-    res.status(200).json(reviews); // Tüm yorumları gönderiyoruz
-  } catch (err) {
-    console.error('Error fetching all reviews:', err);
-    res.status(500).json({ error: 'Failed to fetch reviews.' });
+// Admin review approval route
+router.put(
+  '/:reviewId/approve',
+  authRequired,
+  async (req, res, next) => {
+    // Role guard
+    if (req.user.role !== 'product-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+    try {
+      const review = await Review.findById(req.params.reviewId);
+      if (!review) {
+        return res.status(404).json({ message: 'Review not found.' });
+      }
+      review.approved = true;
+      await review.save();
+      res.json({ message: 'Review approved successfully.' });
+    } catch (err) {
+      console.error('Review approve error:', err);
+      res.status(500).json({ error: 'Failed to approve review.' });
+    }
   }
-});
+);
+
+// Admin review disapproval route
+router.put(
+  '/:reviewId/disapprove',
+  authRequired,
+  async (req, res, next) => {
+    // Role guard
+    if (req.user.role !== 'product-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+    try {
+      const review = await Review.findById(req.params.reviewId);
+      if (!review) {
+        return res.status(404).json({ message: 'Review not found.' });
+      }
+      review.approved = false;
+      await review.save();
+      res.json({ message: 'Review disapproved successfully.' });
+    } catch (err) {
+      console.error('Review disapprove error:', err);
+      res.status(500).json({ error: 'Failed to disapprove review.' });
+    }
+  }
+);
+
+// Get all reviews (approved and unapproved) for Admin
+router.get(
+  '/:productId/all-reviews',
+  authRequired,
+  async (req, res, next) => {
+    // Role guard
+    if (req.user.role !== 'product-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+    const { productId } = req.params;
+    try {
+      const reviews = await Review.find({ productId }); // Hem onaylı hem de onaysız yorumlar
+      res.status(200).json(reviews); // Tüm yorumları gönderiyoruz
+    } catch (err) {
+      console.error('Error fetching all reviews:', err);
+      res.status(500).json({ error: 'Failed to fetch reviews.' });
+    }
+  }
+);
 
 module.exports = router;

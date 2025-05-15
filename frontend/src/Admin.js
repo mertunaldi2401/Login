@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ProductList from './components/ProductList';
 
 function Admin() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
+  const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
   const [productMessage, setProductMessage] = useState('');
   const [productForm, setProductForm] = useState({
@@ -49,6 +51,15 @@ function Admin() {
         .then(res => res.json())
         .then(data => setDeliveries(Array.isArray(data) ? data : []))
         .catch(() => console.error('Failed to fetch deliveries'));
+    }
+  }, [isManager]);
+
+  useEffect(() => {
+    if (isManager) {
+      fetch('http://localhost:5001/products')
+        .then(res => res.json())
+        .then(data => setProducts(Array.isArray(data) ? data : []))
+        .catch(() => console.error('Failed to fetch products'));
     }
   }, [isManager]);
 
@@ -107,6 +118,19 @@ function Admin() {
     }
   };
 
+  const handleProductDelete = async (productId) => {
+    try {
+      const res = await fetch(`http://localhost:5001/products/${productId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setProducts(prev => prev.filter(p => p._id !== productId));
+      }
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    }
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const res = await fetch(`http://localhost:5001/orders/${orderId}/status`, {
@@ -132,6 +156,19 @@ function Admin() {
       }
     } catch (err) {
       console.error('Error approving review:', err);
+    }
+  };
+
+  const handleReviewDisapproval = async (reviewId) => {
+    try {
+      const res = await fetch(`http://localhost:5001/reviews/${reviewId}/disapprove`, {
+        method: 'PUT'
+      });
+      if (res.ok) {
+        setReviews(prev => prev.filter(review => review._id !== reviewId));
+      }
+    } catch (err) {
+      console.error('Error disapproving review:', err);
     }
   };
 
@@ -186,36 +223,49 @@ function Admin() {
         )}
       </div>
 
-      <div style={{ flex: 1, padding: '1.5rem' }}>
-        <h3>Add Product</h3>
-        <form onSubmit={handleProductSubmit}>
-          {Object.entries(productForm).map(([key, val]) =>
-            key === 'isFeatured' ? (
-              <label key={key} style={{ display: 'block', marginBottom: '1rem' }}>
-                <input type="checkbox" name={key} checked={val} onChange={handleProductChange} />
-                {' '}Featured
-              </label>
-            ) : (
-              <input
-                key={key}
-                type="text"
-                name={key}
-                placeholder={key}
-                value={val}
-                onChange={handleProductChange}
-                style={inputStyle}
-              />
-            )
-          )}
-          <button type="submit" style={{
-            background: '#2ecc71', color: '#fff', border: 'none',
-            padding: '0.5rem 1rem', borderRadius: '5px', cursor: 'pointer'
-          }}>
-            Add Product
-          </button>
-          {productMessage && <p style={{ marginTop: '1rem' }}>{productMessage}</p>}
-        </form>
-      </div>
+      {isManager && (
+        <div style={{ flex: 1, padding: '1.5rem' }}>
+          <h3>Add Product</h3>
+          <form onSubmit={handleProductSubmit}>
+            {Object.entries(productForm).map(([key, val]) =>
+              key === 'isFeatured' ? (
+                <label key={key} style={{ display: 'block', marginBottom: '1rem' }}>
+                  <input type="checkbox" name={key} checked={val} onChange={handleProductChange} />
+                  {' '}Featured
+                </label>
+              ) : (
+                <input
+                  key={key}
+                  type="text"
+                  name={key}
+                  placeholder={key}
+                  value={val}
+                  onChange={handleProductChange}
+                  style={inputStyle}
+                />
+              )
+            )}
+            <button
+              type="submit"
+              style={{
+                background: '#2ecc71',
+                color: '#fff',
+                border: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '5px',
+                cursor: 'pointer'
+              }}
+            >
+              Add Product
+            </button>
+            {productMessage && <p style={{ marginTop: '1rem' }}>{productMessage}</p>}
+          </form>
+
+          {/* Product List */}
+          <h3 style={{ marginTop: '2rem' }}>Product List</h3>
+          <ProductList products={products} onDelete={handleProductDelete} />
+        </div>
+      )}
 
       <div style={{
         flex: 1, padding: '1rem', backgroundColor: '#f0f0f0',
@@ -272,6 +322,20 @@ function Admin() {
                 }}
               >
                 Approve Review
+              </button>
+              <button
+                onClick={() => handleReviewDisapproval(review._id)}
+                style={{
+                  background: '#e74c3c',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginLeft: '0.5rem'
+                }}
+              >
+                Disapprove
               </button>
             </div>
           ))

@@ -6,6 +6,12 @@ const productSchema = new mongoose.Schema({
   description: { type: String, maxlength: 1000, trim: true },
   quantityInStock: { type: Number, required: true, min: 0, default: 0 },
   price: { type: Number, required: true, min: 0 },
+  cost: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: function() { return this.price / 2; }
+  },
   image: { type: String, trim: true },
   category: { type: String, required: true, trim: true },
   brand: { type: String, trim: true },
