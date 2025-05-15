@@ -1,5 +1,6 @@
   const Product = require('../models/Product');
   const Review = require('../models/Reviews');
+  const mongoose = require('mongoose');
 
   // Helper function to calculate average rating
   const calculateAverageRating = async (productId) => {
@@ -75,28 +76,57 @@
     }
   };
 
-// Create a new product
-exports.createProduct = async (req, res) => {
+// Create a new product (product-manager only)
+exports.createProduct = async (req, res, next) => {
+  // Role guard
+  if (req.user.role !== 'product-manager') {
+    return res.status(403).json({ message: 'Forbidden: insufficient role' });
+  }
+  const { name, model, description, quantityInStock, price, cost, image, category, brand } = req.body;
+  // Validate required fields
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ message: 'Invalid or missing product name.' });
+  }
+  if (typeof price !== 'number' || price < 0) {
+    return res.status(400).json({ message: 'Invalid or missing price.' });
+  }
   try {
-    const product = new Product(req.body);
-    const saved = await product.save();
-    res.status(201).json(saved);
+    const product = new Product({
+      name,
+      model,
+      description,
+      quantityInStock,
+      price,
+      cost: (typeof cost === 'number' && cost >= 0) ? cost : undefined,
+      image,
+      category,
+      brand
+    });
+    await product.save();
+    res.status(201).json({ message: 'Product created.', product });
   } catch (err) {
-    console.error('Error creating product:', err);
-    res.status(500).json({ message: 'Error creating product.' });
+    next(err);
   }
 };
 
-// Delete a product by ID
-exports.deleteProduct = async (req, res) => {
+// Delete a product (product-manager only)
+exports.deleteProduct = async (req, res, next) => {
+  // Role guard
+  if (req.user.role !== 'product-manager') {
+    return res.status(403).json({ message: 'Forbidden: insufficient role' });
+  }
+  const { id } = req.params;
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ message: 'Product not found.' });
+  }
   try {
-    const deleted = await Product.findByIdAndDelete(req.params.id);
+    const deleted = await Product.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ message: 'Product not found.' });
     }
-    res.json({ message: 'Product deleted.', deleted });
+    res.json({ message: 'Product deleted.' });
   } catch (err) {
-    console.error('Error deleting product:', err);
-    res.status(500).json({ message: 'Error deleting product.' });
+    next(err);
   }
 };
