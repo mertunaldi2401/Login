@@ -74,3 +74,29 @@
       res.status(500).json({ message: 'Error retrieving product.' });
     }
   };
+
+// Create a new product
+exports.createProduct = async (req, res) => {
+  try {
+    const product = new Product(req.body);
+    const saved = await product.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error('Error creating product:', err);
+    res.status(500).json({ message: 'Error creating product.' });
+  }
+};
+
+// Delete a product by ID
+exports.deleteProduct = async (req, res) => {
+  try {
+    const deleted = await Product.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+    res.json({ message: 'Product deleted.', deleted });
+  } catch (err) {
+    console.error('Error deleting product:', err);
+    res.status(500).json({ message: 'Error deleting product.' });
+  }
+};

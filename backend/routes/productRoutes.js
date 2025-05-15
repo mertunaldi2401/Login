@@ -3,7 +3,10 @@ const router = express.Router();
 const productController = require('../controller/productController');
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const authenticateToken = require('../middlewares/authMiddleware');
+
+console.log('authenticateToken:', typeof authenticateToken);
+console.log('createProduct     :', typeof productController.createProduct);
 
 // ✅ Get all products (with average rating and reviews)
 router.get('/', productController.getAllProducts);
