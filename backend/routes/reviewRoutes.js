@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 
 // Yorum ekleme
 router.post(
-  '/:productId/reviews',
+  '/',
   authRequired, // Kullanıcı doğrulaması
   verifyDeliveredPurchase, // Ürün teslimatı doğrulaması
   async (req, res) => {
@@ -58,7 +58,7 @@ router.post(
 );
 
 // Onaylı yorumları getirme
-router.get('/:productId/reviews', async (req, res) => {
+router.get('/', async (req, res) => {
   const { productId } = req.params;
 
   try {
