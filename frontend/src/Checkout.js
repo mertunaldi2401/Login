@@ -5,7 +5,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function Checkout() {
-  // Helper to get headers for API calls
   const getHeaders = () => {
     const token = localStorage.getItem('token');
     const guestId = localStorage.getItem('guestId');
@@ -17,21 +16,24 @@ function Checkout() {
     return {};
   };
 
-  // State for cart items and form inputs
   const [cartItems, setCartItems] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [address, setAddress] = useState('');
-  const [apartment, setApartment] = useState('');
-  const [city, setCity] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [province, setProvince] = useState('');
-  const [country, setCountry] = useState('');
-  const [phone, setPhone] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    province: '',
+    country: '',
+    phone: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: ''
+  });
+
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,18 +51,50 @@ function Checkout() {
     fetchCart();
   }, []);
 
-  // Calculate total quantity and subtotal price
   const totalQuantity = cartItems.length;
   const subtotalPrice = cartItems.reduce((sum, item) => sum + (item.product?.price || 0), 0).toFixed(2);
 
-  // Form Validation
-  const isFormValid = () => {
-    return firstName && lastName && address && city && postalCode && province && country && phone && cardNumber && expiryDate && cvv;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    // Card number formatting
+    if (name === "cardNumber") {
+      formattedValue = value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+    }
+
+    // Expiry date formatting (MM/YY)
+    else if (name === "expiryDate") {
+      formattedValue = value.replace(/\D/g, '');
+      if (formattedValue.length > 2) {
+        formattedValue = formattedValue.slice(0, 2) + '/' + formattedValue.slice(2, 4);
+      }
+    }
+
+    // CVV formatting (3-4 digits only)
+    else if (name === "cvv") {
+      formattedValue = value.replace(/\D/g, '').slice(0, 4);
+    }
+
+    const updatedFormData = {
+      ...formData,
+      [name]: formattedValue
+    };
+    setFormData(updatedFormData);
+
+    // Clear the error if the form is now valid
+    if (isFormValid(updatedFormData)) {
+      setErrorMessage('');
+    }
   };
 
-  // Handle Place Order
+  const isFormValid = (data) => {
+    return Object.values(data).every((field) => field.trim() !== '');
+  };
+
   const handlePlaceOrder = async () => {
-    if (!isFormValid()) {
+    if (!isFormValid(formData)) {
+      setErrorMessage("⚠️ Please fill in all the required fields.");
       toast.error("⚠️ Please fill in all the required fields.");
       return;
     }
@@ -75,17 +109,16 @@ function Checkout() {
       console.log('Order created:', order);
 
       localStorage.removeItem('cart');
-      toast.success('✅ Invoice has been sent to your email!');
+      toast.success("✅ Invoice has been sent to your email!");
       navigate(`/invoice/${order._id}`);
     } catch (err) {
       console.error('❌ Frontend order error:', err.response?.data || err.message);
-      alert(err.response?.data?.error || 'Failed to place order. Please try again.');
+      toast.error('❌ Failed to place order. Please try again.');
     } finally {
       setIsPlacingOrder(false);
     }
   };
 
-  // Styles (Preserved from Original Version)
   const containerStyle = {
     display: 'flex',
     flexWrap: 'wrap',
@@ -141,48 +174,54 @@ function Checkout() {
     cursor: 'pointer'
   };
 
+  const errorStyle = {
+    color: '#ff3333',
+    fontWeight: 'bold',
+    marginTop: '0.5rem',
+    marginBottom: '0.5rem'
+  };
+
   return (
     <div style={containerStyle}>
-      {/* Left Section: Checkout Form */}
       <div style={formSectionStyle}>
         <h2>Checkout</h2>
         <form onSubmit={(e) => e.preventDefault()}>
-          <label style={labelStyle}>First Name</label>
-          <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required style={inputStyle} />
+          {Object.keys(formData).map((key) => (
+            <div key={key}>
+              <label style={labelStyle}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}</label>
+              <input 
+                type="text" 
+                name={key} 
+                value={formData[key]} 
+                onChange={handleInputChange} 
+                style={inputStyle} 
+              />
+            </div>
+          ))}
 
-          <label style={labelStyle}>Last Name</label>
-          <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required style={inputStyle} />
+          {errorMessage && <div style={errorStyle}>{errorMessage}</div>}
 
-          <label style={labelStyle}>Street Address</label>
-          <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required style={inputStyle} />
-
-          <label style={labelStyle}>Apartment/Suite (Optional)</label>
-          <input type="text" value={apartment} onChange={(e) => setApartment(e.target.value)} style={inputStyle} />
-
-          <label style={labelStyle}>Town/City</label>
-          <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required style={inputStyle} />
-
-          <label style={labelStyle}>Postal Code</label>
-          <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required style={inputStyle} />
-
-          <label style={labelStyle}>Card Number</label>
-          <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} required style={inputStyle} />
-
-          <label style={labelStyle}>Expiry Date (MM/YY)</label>
-          <input type="text" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required style={inputStyle} />
-
-          <label style={labelStyle}>CVV</label>
-          <input type="text" value={cvv} onChange={(e) => setCvv(e.target.value)} required style={inputStyle} />
-
-          <button type="button" onClick={handlePlaceOrder} style={buttonStyle}>Make Payment</button>
+          <button 
+            type="button" 
+            onClick={handlePlaceOrder} 
+            style={buttonStyle}
+          >
+            Make Payment
+          </button>
         </form>
       </div>
 
-      {/* Right Section: Order Summary (UNCHANGED) */}
       <div style={summarySectionStyle}>
         <h3>Order Summary</h3>
-        <p>Total items: {totalQuantity}</p>
-        <p>Subtotal: ${subtotalPrice}</p>
+        <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
+          {cartItems.map((item, index) => (
+            <li key={index} style={{ marginBottom: '0.5rem' }}>
+              {item.product?.name} - ${item.product?.price?.toFixed(2)}
+            </li>
+          ))}
+        </ul>
+        <p><strong>Total items:</strong> {totalQuantity}</p>
+        <p><strong>Subtotal:</strong> ${subtotalPrice}</p>
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
