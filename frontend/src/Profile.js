@@ -83,6 +83,42 @@ const Profile = () => {
                   {order.status}
                 </span>
               </p>
+              {order.status === 'processing' && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`http://localhost:5001/orders/${order._id}/cancel`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: `Bearer ${token}`
+                        }
+                      });
+                      if (!res.ok) throw new Error('Failed to cancel order');
+                      alert('Order successfully canceled');
+                      // Refresh orders
+                      const refreshed = await fetch('http://localhost:5001/orders/history', {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      const updatedOrders = await refreshed.json();
+                      setOrders(updatedOrders);
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  style={{
+                    marginTop: '0.5rem',
+                    padding: '0.4rem 0.8rem',
+                    backgroundColor: '#e74c3c',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel Order
+                </button>
+              )}
             </li>
           ))}
         </ul>
