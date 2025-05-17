@@ -11,23 +11,22 @@ import Checkout from './Checkout';
 import Admin from './Admin';
 import Profile from './Profile';
 import InvoicePage from './InvoicePage';
+import ProductManager from './ProductManager';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
-  // Derive a user‑friendly display name (username) for the navbar
   const displayName = React.useMemo(() => {
     if (!auth.user) return '';
-    // Case 1: auth.user is a plain string (e.g., e‑mail)
     if (typeof auth.user === 'string') {
       return auth.user.split('@')[0];
     }
-    // Case 2: auth.user is an object returned from backend/login API
     if (auth.user.username) return auth.user.username;
-    if (auth.user.email)  return auth.user.email.split('@')[0];
+    if (auth.user.email) return auth.user.email.split('@')[0];
     return '';
   }, [auth.user]);
+
   const isAuthenticated = auth.user !== null;
   const location = useLocation();
   const navigate = useNavigate();
@@ -75,44 +74,6 @@ function App() {
     textShadow: '2px 2px 5px rgba(0,0,0,0.5)'
   };
 
-  const searchContainerStyle = {
-    position: 'relative',
-    margin: '0 1rem',
-    flexGrow: 1,
-    maxWidth: '400px'
-  };
-
-  const searchInputStyle = {
-    width: '100%',
-    padding: '0.5rem 0.2rem 0.5rem 0.75rem',
-    fontSize: '1rem',
-    borderRadius: '4px',
-    border: 'none',
-    backgroundColor: '#fff',
-    color: '#333333'
-  };
-
-  const iconStyle = {
-    position: 'absolute',
-    right: '1px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    color: '#cf0808',
-    fontSize: '1.4rem',
-    cursor: 'pointer'
-  };
-
-  const categoryDropdownStyle = {
-    marginLeft: '1rem',
-    background: '#222',
-    color: '#fff',
-    border: '1px solid #d50000',
-    padding: '0.38rem 0.6rem',
-    fontSize: '1.1rem',
-    borderRadius: '4px',
-    fontFamily: '"Metal Mania", cursive'
-  };
-
   const linkButtonStyle = {
     textDecoration: 'none',
     color: '#fff',
@@ -151,32 +112,18 @@ function App() {
         <Link to="/" style={logoStyle}>THOR'S MIGHTY GUITAR STORE</Link>
 
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'center' }}>
-          <div style={searchContainerStyle}>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={handleEnter}
-              style={searchInputStyle}
-            />
-            <FontAwesomeIcon icon={faMagnifyingGlass} style={iconStyle} onClick={handleIconClick} />
-          </div>
-
-          {/* ✅ Only Category Dropdown (No sorting dropdown anymore) */}
-          <select
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            style={categoryDropdownStyle}
-          >
-            <option value="">Categories</option>
-            <option value="Guitars">Guitars</option>
-            <option value="Effects">Effects</option>
-            <option value="Strings">Strings</option>
-          </select>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleEnter}
+            style={{ width: '100%', padding: '0.5rem 0.2rem 0.5rem 0.75rem', fontSize: '1rem', borderRadius: '4px', border: 'none', backgroundColor: '#fff', color: '#333' }}
+          />
+          <FontAwesomeIcon icon={faMagnifyingGlass} style={{ color: '#cf0808', fontSize: '1.4rem', cursor: 'pointer', marginLeft: '0.5rem' }} onClick={handleIconClick} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div>
           {isAuthenticated ? (
             <>
               <span style={{ marginRight: '1em' }}>
@@ -187,25 +134,15 @@ function App() {
                 <FontAwesomeIcon icon={faUser} title="Profile" />
               </Link>
 
-              {location.pathname === '/cart' ? (
-                <Link
-                  to="/"
-                  style={linkButtonStyle}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  Go Back
-                </Link>
-              ) : (
-                <Link
-                  to="/cart"
-                  style={linkButtonStyle}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  Go to Cart
-                </Link>
-              )}
+              <Link
+                to="/cart"
+                style={linkButtonStyle}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                Go to Cart
+              </Link>
+
               <span
                 onClick={logout}
                 style={logoutButtonStyle}
@@ -217,16 +154,6 @@ function App() {
             </>
           ) : (
             <>
-              {(localStorage.getItem('guestId')) && (
-                <Link
-                  to="/cart"
-                  style={linkButtonStyle}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  Go to Cart
-                </Link>
-              )}
               <Link
                 to="/login"
                 style={linkButtonStyle}
@@ -235,6 +162,7 @@ function App() {
               >
                 Login
               </Link>
+
               <Link
                 to="/register"
                 style={linkButtonStyle}
@@ -259,6 +187,7 @@ function App() {
         <Route path="/invoice/:orderId" element={<InvoicePage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/productmanager" element={<ProductManager />} />
       </Routes>
     </div>
   );
