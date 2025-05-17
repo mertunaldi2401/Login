@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ProductList from './components/ProductList';
+import SalesManagerDashboard from './salesManagerDashboard';
 
 function Admin() {
   const [users, setUsers] = useState([]);
@@ -361,6 +362,10 @@ function Admin() {
             </div>
           ))
         )}
+        <h3 style={{ marginTop: '2rem' }}>Sales Dashboard</h3>
+        <div style={{ background: '#fff', padding: '1rem', borderRadius: '5px' }}>
+          <SalesManagerDashboard />
+        </div>
       </div>
     </div>
   );
