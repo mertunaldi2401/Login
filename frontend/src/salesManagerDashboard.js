@@ -64,6 +64,8 @@ export default function SalesManagerDashboard() {
 function PricingTab() {
   const [productId, setProductId] = useState("");
   const [price, setPrice] = useState("");
+  const [unpriced, setUnpriced] = useState([]);
+
   const handleSubmit = async () => {
     try {
       await fetch(`/sales/product/${productId}/price`, {
@@ -76,7 +78,22 @@ function PricingTab() {
       toast.error("Update failed");
     }
   };
+
+  useEffect(() => {
+    const fetchUnpriced = async () => {
+      try {
+        const res = await fetch("/sales/unpriced");
+        const data = await res.json();
+        setUnpriced(data);
+      } catch {
+        toast.error("Failed to fetch unpriced products");
+      }
+    };
+    fetchUnpriced();
+  }, []);
+
   return (
+    <>
     <Card className="max-w-xl">
       <CardContent className="space-y-4 p-6">
         <div className="space-y-2">
@@ -90,6 +107,50 @@ function PricingTab() {
         <Button onClick={handleSubmit}>Set Price / Discount</Button>
       </CardContent>
     </Card>
+    <div className="mt-8 space-y-4">
+      <h2 className="text-lg font-semibold">Unpriced Products</h2>
+      {unpriced.length === 0 ? (
+        <p className="text-muted-foreground text-sm">All products are priced.</p>
+      ) : (
+        <ul className="space-y-2">
+          {unpriced.map((p) => (
+            <li key={p._id} className="border p-4 rounded-xl flex gap-4 items-center">
+              <span className="font-medium">{p.name}</span>
+              <Input
+                type="number"
+                placeholder="Set price"
+                value={p.price || ""}
+                onChange={(e) =>
+                  setUnpriced((prev) =>
+                    prev.map((item) =>
+                      item._id === p._id ? { ...item, price: e.target.value } : item
+                    )
+                  )
+                }
+              />
+              <Button
+                onClick={async () => {
+                  try {
+                    await fetch(`/sales/product/${p._id}/price`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ price: Number(p.price) }),
+                    });
+                    toast.success("Price set");
+                    setUnpriced((prev) => prev.filter((item) => item._id !== p._id));
+                  } catch {
+                    toast.error("Failed to set price");
+                  }
+                }}
+              >
+                Set Price
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+    </>
   );
 }
 
