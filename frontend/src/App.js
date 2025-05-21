@@ -12,6 +12,7 @@ import Admin from './Admin';
 import Profile from './Profile';
 import InvoicePage from './InvoicePage';
 import ProductManager from './ProductManager';
+import SalesManager from './SalesManager'; // ✅ Updated to import the correct component
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -188,6 +189,7 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/productmanager" element={<ProductManager />} />
+        <Route path="/salesmanager" element={<SalesManager />} />
       </Routes>
     </div>
   );

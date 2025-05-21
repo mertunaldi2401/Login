@@ -69,6 +69,10 @@ function Admin() {
     navigate('/productmanager');
   };
 
+  const handleSalesManager = () => {
+    navigate('/salesmanager');
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif', background: '#f5f5f5' }}>
       
@@ -81,6 +85,10 @@ function Admin() {
         
         <button onClick={handleProductManager} style={{ marginBottom: '1rem', background: '#2980b9', color: '#fff', padding: '0.5rem 1rem', border: 'none', borderRadius: '5px' }}>
           Product Manager
+        </button>
+
+        <button onClick={handleSalesManager} style={{ marginBottom: '1rem', background: '#27ae60', color: '#fff', padding: '0.5rem 1rem', border: 'none', borderRadius: '5px' }}>
+          Sales Manager
         </button>
 
         {users.length === 0 ? (

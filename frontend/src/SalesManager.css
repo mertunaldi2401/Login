@@ -1,0 +1,51 @@
+.sales-manager-container {
+  padding: 2rem;
+  background-color: #111;
+  color: #fff;
+  font-family: "Metal Mania", cursive;
+  min-height: 100vh;
+}
+
+.sales-manager-container h2, 
+.sales-manager-container h3 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.sales-manager-container input {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+
+.sales-manager-container button {
+  padding: 0.75rem 1rem;
+  background-color: #d50000;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+}
+
+.sales-manager-container button:hover {
+  background-color: #b30000;
+}
+
+.sales-manager-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sales-manager-container li {
+  background-color: #222;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 4px;
+}
