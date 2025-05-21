@@ -5,7 +5,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function Checkout() {
-  // Helper to get headers for API calls
   const getHeaders = () => {
     const token = localStorage.getItem('token');
     const guestId = localStorage.getItem('guestId');
@@ -16,9 +15,25 @@ function Checkout() {
     }
     return {};
   };
-  // State for cart items (retrieved from localStorage for this example)
+
   const [cartItems, setCartItems] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    province: '',
+    country: '',
+    phone: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: ''
+  });
+
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,81 +47,60 @@ function Checkout() {
         console.error('❌ Failed to load cart from backend:', err.response?.data || err.message);
       }
     };
-  
+
     fetchCart();
   }, []);
 
-  // Calculate total quantity and subtotal price
   const totalQuantity = cartItems.length;
   const subtotalPrice = cartItems.reduce((sum, item) => sum + (item.product?.price || 0), 0).toFixed(2);
 
-  // Inline styles for the component (preserving black theme)
-  const containerStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',               // allow stacking on small screens
-    justifyContent: 'space-between',
-    backgroundColor: '#000',        // black background
-    color: '#fff',                  // white text for contrast
-    fontFamily: '"Metal Mania", cursive', // site font for consistency
-    minHeight: '100vh',             // full viewport height (if needed to push footer down)
-    padding: '2rem'
-  };
-  const formSectionStyle = {
-    flex: '1 1 400px',              // grow to fill space, minimum width ~400px for form
-    marginRight: '2rem'             // gap between form and summary
-  };
-  const summarySectionStyle = {
-    flex: '0 0 300px',              // do not grow, fixed width for summary (adjust as needed)
-    backgroundColor: 'rgba(255,255,255,0.1)', // translucent panel on dark background
-    borderRadius: '8px',
-    padding: '1.5rem',
-    marginTop: '1.5rem',            // some top margin in case it wraps under form on mobile
-    height: 'fit-content'           // so it wraps its content height (to not stretch full height of container)
-  };
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    margin: '0.5rem 0',            // space between fields
-    backgroundColor: '#333',       // dark input background to match theme
-    color: '#fff',                 // light text for contrast
-    border: 'none',
-    borderRadius: '4px',
-    fontSize: '1rem'
-  };
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '0.25rem',
-    fontWeight: '500'             // semi-bold labels for readability
-  };
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    marginTop: '1rem',
-    background: 'linear-gradient(45deg, #ff0000, #990000)',  // red gradient
-    border: 'none',
-    borderRadius: '4px',
-    color: '#fff',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    textAlign: 'center'
-    // (Hover effect added via onMouseEnter/Leave in JSX below)
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    // Card number formatting
+    if (name === "cardNumber") {
+      formattedValue = value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+    }
+
+    // Expiry date formatting (MM/YY)
+    else if (name === "expiryDate") {
+      formattedValue = value.replace(/\D/g, '');
+      if (formattedValue.length > 2) {
+        formattedValue = formattedValue.slice(0, 2) + '/' + formattedValue.slice(2, 4);
+      }
+    }
+
+    // CVV formatting (3-4 digits only)
+    else if (name === "cvv") {
+      formattedValue = value.replace(/\D/g, '').slice(0, 4);
+    }
+
+    const updatedFormData = {
+      ...formData,
+      [name]: formattedValue
+    };
+    setFormData(updatedFormData);
+
+    // Clear the error if the form is now valid
+    if (isFormValid(updatedFormData)) {
+      setErrorMessage('');
+    }
   };
 
-  // Additional styling for responsive tweaks (optional):
-  // e.g., we could adjust flexDirection for very narrow screens via JS or add media queries in a styled-jsx block.
+  const isFormValid = (data) => {
+    return Object.values(data).every((field) => field.trim() !== '');
+  };
 
-  // Place Order Handler
   const handlePlaceOrder = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('⚠️ Please login first before placing an order.');
-      navigate('/login');
+    if (!isFormValid(formData)) {
+      setErrorMessage("⚠️ Please fill in all the required fields.");
+      toast.error("⚠️ Please fill in all the required fields.");
       return;
     }
+
     try {
       setIsPlacingOrder(true);
-
       const res = await axios.post('http://localhost:5001/orders', {}, {
         headers: getHeaders(),
       });
@@ -115,194 +109,122 @@ function Checkout() {
       console.log('Order created:', order);
 
       localStorage.removeItem('cart');
-      toast.success('✅ Invoice has been sent to your email!');
+      toast.success("✅ Invoice has been sent to your email!");
       navigate(`/invoice/${order._id}`);
     } catch (err) {
       console.error('❌ Frontend order error:', err.response?.data || err.message);
-      alert(err.response?.data?.error || 'Failed to place order. Please try again.');
+      toast.error('❌ Failed to place order. Please try again.');
     } finally {
       setIsPlacingOrder(false);
     }
   };
 
-  // Render the checkout form and summary
+  const containerStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    backgroundColor: '#000',
+    color: '#fff',
+    fontFamily: '"Metal Mania", cursive',
+    minHeight: '100vh',
+    padding: '2rem'
+  };
+
+  const formSectionStyle = {
+    flex: '1 1 400px',
+    marginRight: '2rem'
+  };
+
+  const summarySectionStyle = {
+    flex: '0 0 300px',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: '8px',
+    padding: '1.5rem',
+    marginTop: '1.5rem',
+    height: 'fit-content'
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '0.75rem',
+    margin: '0.5rem 0',
+    backgroundColor: '#333',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    fontSize: '1rem'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '0.25rem',
+    fontWeight: '500'
+  };
+
+  const buttonStyle = {
+    width: '100%',
+    padding: '0.75rem',
+    marginTop: '1rem',
+    background: 'linear-gradient(45deg, #ff0000, #990000)',
+    border: 'none',
+    borderRadius: '4px',
+    color: '#fff',
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer'
+  };
+
+  const errorStyle = {
+    color: '#ff3333',
+    fontWeight: 'bold',
+    marginTop: '0.5rem',
+    marginBottom: '0.5rem'
+  };
+
   return (
     <div style={containerStyle}>
-      {/* Left Section: Checkout Form */}
       <div style={formSectionStyle}>
         <h2>Checkout</h2>
-        <form onSubmit={(e) => e.preventDefault() /* prevent form refresh, no real submit yet */}>
-          {/* Name fields in one row */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>First Name</label>
+        <form onSubmit={(e) => e.preventDefault()}>
+          {Object.keys(formData).map((key) => (
+            <div key={key}>
+              <label style={labelStyle}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}</label>
               <input 
                 type="text" 
-                name="firstName" 
-                required 
+                name={key} 
+                value={formData[key]} 
+                onChange={handleInputChange} 
                 style={inputStyle} 
               />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Last Name</label>
-              <input 
-                type="text" 
-                name="lastName" 
-                required 
-                style={inputStyle} 
-              />
-            </div>
-          </div>
+          ))}
 
-          {/* Street Address */}
-          <div>
-            <label style={labelStyle}>Street Address</label>
-            <input 
-              type="text" 
-              name="address" 
-              required 
-              style={inputStyle} 
-            />
-          </div>
+          {errorMessage && <div style={errorStyle}>{errorMessage}</div>}
 
-          {/* Apartment/Suite (optional) */}
-          <div>
-            <label style={labelStyle}>Apartment/Suite <span style={{ fontWeight: 'normal' }}>(optional)</span></label>
-            <input 
-              type="text" 
-              name="address2" 
-              placeholder="Apartment, suite, unit, etc." 
-              style={inputStyle} 
-            />
-          </div>
-
-          {/* Town/City and Postal Code in one row */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Town/City</label>
-              <input 
-                type="text" 
-                name="city" 
-                required 
-                style={inputStyle} 
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Postal Code</label>
-              <input 
-                type="text" 
-                name="postalCode" 
-                required 
-                style={inputStyle} 
-              />
-            </div>
-          </div>
-
-          {/* Province/Region and Country in one row */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Province/Region</label>
-              <input 
-                type="text" 
-                name="province" 
-                required 
-                style={inputStyle} 
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Country</label>
-              <select name="country" required style={{ ...inputStyle, appearance: 'none' }}>
-                {/* Country dropdown options (just a couple for example) */}
-                <option value="">Select Country</option>
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="UK">United Kingdom</option>
-                {/* ...other countries */}
-              </select>
-            </div>
-          </div>
-
-          {/* Phone Number */}
-          <div>
-            <label style={labelStyle}>Phone Number</label>
-            <input 
-              type="tel" 
-              name="phone" 
-              required 
-              style={inputStyle} 
-            />
-          </div>
-
-          {/* Email Address */}
-          <div>
-            <label style={labelStyle}>Email Address</label>
-            <input 
-              type="email" 
-              name="email" 
-              required 
-              style={inputStyle} 
-            />
-          </div>
+          <button 
+            type="button" 
+            onClick={handlePlaceOrder} 
+            style={buttonStyle}
+          >
+            Make Payment
+          </button>
         </form>
       </div>
 
-      {/* Right Section: Order Summary */}
       <div style={summarySectionStyle}>
         <h3>Order Summary</h3>
-        {cartItems.length === 0 ? (
-          <p>Your cart is empty.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0' }}>
-            {cartItems.map((item, index) => (
-              <li key={index} style={{ marginBottom: '0.5rem' }}>
-                {/* Each item: name and price. Could also include quantity if applicable */}
-                <span>{item.product?.name}</span> – <span>${item.product?.price?.toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {cartItems.length > 0 && (
-          <div style={{ marginTop: '1rem' }}>
-            <p><strong>Total items:</strong> {totalQuantity}</p>
-            <p><strong>Subtotal:</strong> ${subtotalPrice}</p>
-          </div>
-        )}
-        {/* Proceed to Payment button */}
-        <button 
-          type="button" 
-          style={buttonStyle}
-          onClick={handlePlaceOrder}
-          disabled={isPlacingOrder}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff3333, #cc0000)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(45deg, #ff0000, #990000)'}
-        >
-          {isPlacingOrder ? (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="spinner" style={{
-                width: '16px',
-                height: '16px',
-                border: '3px solid #fff',
-                borderTop: '3px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                marginRight: '8px'
-              }} />
-              Placing Order...
-            </span>
-          ) : (
-            'Proceed to Payment'
-          )}
-        </button>
+        <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
+          {cartItems.map((item, index) => (
+            <li key={index} style={{ marginBottom: '0.5rem' }}>
+              {item.product?.name} - ${item.product?.price?.toFixed(2)}
+            </li>
+          ))}
+        </ul>
+        <p><strong>Total items:</strong> {totalQuantity}</p>
+        <p><strong>Subtotal:</strong> ${subtotalPrice}</p>
       </div>
+
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
-      <style>
-      {`
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      `}
-      </style>
     </div>
   );
 }

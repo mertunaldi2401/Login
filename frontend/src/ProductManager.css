@@ -1,0 +1,53 @@
+.product-manager-container {
+  padding: 2rem;
+  background-color: #111;
+  color: #fff;
+  font-family: "Metal Mania", cursive;
+  min-height: 100vh;
+}
+
+.product-manager-container h1, .product-manager-container h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.product-manager-container input, .product-manager-container select {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+
+.product-manager-container button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #d50000;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.product-manager-container button:hover {
+  background-color: #b30000;
+}
+
+.product-manager-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.product-manager-container li {
+  background-color: #222;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
