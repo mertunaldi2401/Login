@@ -80,24 +80,53 @@ function PricingTab() {
   const [productId, setProductId] = useState("");
   const [price, setPrice] = useState("");
   const [unpriced, setUnpriced] = useState([]);
+  const [discount, setDiscount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const token = localStorage.getItem("token");
 
   const handleSubmit = async () => {
+    setLoading(true);
+    setError("");
     try {
       await fetch(`/sales/product/${productId}/price`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ price: Number(price) }),
       });
       toast.success("Price updated 🎉");
     } catch {
       toast.error("Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDiscount = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      await fetch(`/sales/product/${productId}/discount`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ discountPercentage: Number(discount) }),
+      });
+      toast.success("Discount applied 🎉");
+    } catch {
+      setError("Failed to apply discount");
+      toast.error("Failed to apply discount");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     const fetchUnpriced = async () => {
       try {
-        const res = await fetch("/sales/unpriced");
+        const res = await fetch("/sales/unpriced", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         setUnpriced(data);
       } catch {
@@ -105,7 +134,7 @@ function PricingTab() {
       }
     };
     fetchUnpriced();
-  }, []);
+  }, [token]);
 
   return (
     <>
@@ -119,7 +148,22 @@ function PricingTab() {
           <Label htmlFor="price">New Price</Label>
           <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
-        <Button onClick={handleSubmit}>Set Price / Discount</Button>
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? "Setting Price..." : "Set Price / Discount"}
+        </Button>
+        <div className="space-y-2">
+          <Label htmlFor="discount">Discount %</Label>
+          <Input
+            id="discount"
+            type="number"
+            value={discount}
+            onChange={(e) => setDiscount(e.target.value)}
+          />
+        </div>
+        <Button onClick={handleDiscount} disabled={loading}>
+          {loading ? "Applying..." : "Apply Discount"}
+        </Button>
+        {error && <p className="text-red-500">{error}</p>}
       </CardContent>
     </Card>
     <div className="mt-8 space-y-4">
@@ -145,20 +189,25 @@ function PricingTab() {
               />
               <Button
                 onClick={async () => {
+                  setLoading(true);
+                  setError("");
                   try {
                     await fetch(`/sales/product/${p._id}/price`, {
                       method: "PUT",
-                      headers: { "Content-Type": "application/json" },
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                       body: JSON.stringify({ price: Number(p.price) }),
                     });
                     toast.success("Price set");
                     setUnpriced((prev) => prev.filter((item) => item._id !== p._id));
                   } catch {
                     toast.error("Failed to set price");
+                  } finally {
+                    setLoading(false);
                   }
                 }}
+                disabled={loading}
               >
-                Set Price
+                {loading ? "Setting..." : "Set Price"}
               </Button>
             </li>
           ))}
@@ -174,11 +223,24 @@ function InvoicesTab() {
   const [start, setStart] = useState("2025-05-01");
   const [end, setEnd] = useState("2025-05-31");
   const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const token = localStorage.getItem("token");
 
   const fetchInvoices = async () => {
-    const res = await fetch(`/sales/invoices?startDate=${start}&endDate=${end}`);
-    const data = await res.json();
-    setInvoices(data);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/sales/invoices?startDate=${start}&endDate=${end}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setInvoices(data);
+    } catch {
+      setError("Failed to fetch invoices");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -194,6 +256,9 @@ function InvoicesTab() {
         </div>
         <Button onClick={fetchInvoices}>Fetch</Button>
       </div>
+      {loading && <p>Loading invoices...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      <Button onClick={() => window.print()} className="mt-2">Print / Save PDF</Button>
 
       <Card>
         <CardContent className="p-4 overflow-auto max-h-[400px]">
@@ -237,16 +302,29 @@ function RevenueTab() {
   const [start, setStart] = useState("2025-05-01");
   const [end, setEnd] = useState("2025-05-31");
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const token = localStorage.getItem("token");
 
   const fetchData = async () => {
-    const res = await fetch(`/sales/revenue?startDate=${start}&endDate=${end}`);
-    const json = await res.json();
-    const chartData = json.map((d) => ({
-      period: d.period?.day ? `${d.period.month}/${d.period.day}` : `M${d.period.month}`,
-      revenue: d.revenue,
-      profit: d.profit,
-    }));
-    setData(chartData);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/sales/revenue?startDate=${start}&endDate=${end}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      const chartData = json.map((d) => ({
+        period: d.period?.day ? `${d.period.month}/${d.period.day}` : `M${d.period.month}`,
+        revenue: d.revenue,
+        profit: d.profit,
+      }));
+      setData(chartData);
+    } catch {
+      setError("Failed to load revenue data");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -260,8 +338,12 @@ function RevenueTab() {
           <Label>End</Label>
           <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
         </div>
-        <Button onClick={fetchData}>Load Chart</Button>
+        <Button onClick={fetchData} disabled={loading}>
+          {loading ? "Loading..." : "Load Chart"}
+        </Button>
       </div>
+      {loading && <p>Loading revenue data...</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
       <Card>
         <CardContent className="p-4 h-80">
@@ -284,16 +366,29 @@ function RevenueTab() {
 function RefundsTab() {
   const [status, setStatus] = useState("pending");
   const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const token = localStorage.getItem("token");
 
   const load = async () => {
-    const res = await fetch(`/sales/refunds?status=${status}`);
-    setList(await res.json());
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/sales/refunds?status=${status}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setList(await res.json());
+    } catch {
+      setError("Failed to load refunds");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const decide = async (id, decision) => {
     await fetch(`/sales/refund/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ decision }),
     });
     toast.success(`Refund ${decision}`);
@@ -316,6 +411,8 @@ function RefundsTab() {
           <option value="rejected">rejected</option>
         </select>
       </div>
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
       <Card>
         <CardContent className="p-4 overflow-auto max-h-[400px]">
