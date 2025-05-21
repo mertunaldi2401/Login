@@ -47,6 +47,9 @@ app.use('/categories', categoryRoutes);
 // Delivery list endpoints
 app.use('/deliveries', deliveryRoutes);
 
+app.use("/api/sales", require("./routes/salesManagerRoutes"));
+app.use("/api/wishlist", require("./routes/wishlistRoutes"));
+
 // Base route for sanity check
 app.get('/', (req, res) => {
   res.send('API is running...');

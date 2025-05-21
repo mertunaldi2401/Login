@@ -12,6 +12,20 @@ const productSchema = new mongoose.Schema({
     min: 0,
     default: function() { return this.price / 2; }
   },
+
+  priceSetBySalesManager: {
+    type: Boolean,
+    default: false
+  },
+  discountPercentage: {
+    type: Number,
+    default: 0
+  },
+  costPrice: {
+    type: Number,
+    default: 0  // Optional: useful for profit calculation
+  },
+
   image: { type: String, trim: true },
   category: { type: String, required: true, trim: true },
   brand: { type: String, trim: true },

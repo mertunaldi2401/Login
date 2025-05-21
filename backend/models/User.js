@@ -14,7 +14,11 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
-  }
+  },
+  wishlist: [{
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Product"
+  }]
 });
 
 module.exports = mongoose.model('User', UserSchema);

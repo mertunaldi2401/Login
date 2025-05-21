@@ -45,4 +45,29 @@ async function sendInvoiceEmail(userId, pdfBuffer, orderId) {
   }
 }
 
+async function notifyUsersAboutDiscount(product) {
+  const users = await User.find({ wishlist: product._id });
+  for (const user of users) {
+    const mailOptions = {
+      from: `"Thor's Mighty Guitar Store" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: `Discount Alert: ${product.name}`,
+      html: `
+        <h2>Good news, ${user.username || user.email.split('@')[0]}!</h2>
+        <p>The product <strong>${product.name}</strong> in your wishlist is now <strong>${product.discountPercentage}% off</strong>.</p>
+        <p>Check it out before it's gone!</p>
+        <br/>
+        <p>Thor's Mighty Guitar Store</p>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`📩 Discount alert sent to ${user.email}`);
+    } catch (error) {
+      console.error(`❌ Failed to notify ${user.email}:`, error);
+    }
+  }
+}
+
 module.exports = { sendInvoiceEmail };
