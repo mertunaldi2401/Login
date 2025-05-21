@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "./AuthContext";
 import {
   Tabs,
   TabsList,
@@ -25,6 +27,19 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
  */
 
 export default function SalesManagerDashboard() {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (!user.role || !user.role.includes("sales-manager")) {
+      toast.error("Access denied");
+      navigate("/");
+    }
+  }, [user, navigate]);
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-3xl font-bold">Sales Manager Panel</h1>
