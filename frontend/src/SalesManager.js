@@ -9,10 +9,13 @@ function SalesManager() {
   const token = auth.token || localStorage.getItem('token');
   const authHeader = { Authorization: `Bearer ${token}` };
 
+  const today = new Date().toISOString().split('T')[0];
+  const lastMonth = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(lastMonth);
+  const [endDate, setEndDate] = useState(today);
+
   const [discounts, setDiscounts] = useState([{ productId: '', rate: '' }]);
   const [invoices, setInvoices] = useState([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [revenueData, setRevenueData] = useState([]);
 
   const [unpricedProducts, setUnpricedProducts] = useState([]);
@@ -45,6 +48,10 @@ function SalesManager() {
       }
     };
     fetchRefunds();
+
+    // Automatically load invoices and revenue data when the component mounts
+    fetchInvoices();
+    calculateRevenue();
   }, []);
 
   // Handler for changing a field in a discount entry
@@ -86,8 +93,10 @@ function SalesManager() {
     alert('Discount applied and users notified!');
   };
 
+  const baseUrl = 'http://localhost:5001';
+
   const fetchInvoices = async () => {
-    const res = await fetch(`/api/salesmanager/invoices?start=${startDate}&end=${endDate}`, {
+    const res = await fetch(`${baseUrl}/api/salesmanager/invoices?start=${startDate}&end=${endDate}`, {
       headers: authHeader
     });
     const data = await res.json();
@@ -101,7 +110,7 @@ function SalesManager() {
   };
 
   const calculateRevenue = async () => {
-    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, {
+    const res = await fetch(`${baseUrl}/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, {
       headers: authHeader
     });
     const data = await res.json();
@@ -237,7 +246,11 @@ function SalesManager() {
         <button onClick={fetchInvoices}>Load Invoices</button>
         <button onClick={exportPDF}>Save as PDF</button>
         <ul>
-          {invoices.map(inv => <li key={inv.id}>Invoice #{inv.id} - ${inv.total}</li>)}
+          {invoices.map(inv => (
+            <li key={inv._id}>
+              Invoice #{inv._id.slice(-6)} - {new Date(inv.createdAt).toLocaleDateString()} - ${inv.totalPrice.toFixed(2)}
+            </li>
+          ))}
         </ul>
       </div>
 
@@ -245,6 +258,7 @@ function SalesManager() {
         <h3>Revenue & Profit</h3>
         <button onClick={calculateRevenue}>Calculate</button>
         <canvas id="revenueChart" width="600" height="300"></canvas>
+        {!revenueData.length && <p>No data for selected range.</p>}
       </div>
 
       <div style={{ marginTop: '2rem' }}>
