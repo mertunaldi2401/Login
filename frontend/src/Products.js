@@ -1,4 +1,4 @@
-// ✅ Products.js (Fixed Search Filtering Fully + Added Rating Display)
+// ✅ Products.js (Fixed Search Filtering Fully + Added Rating Display + Discount Display)
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,7 +26,6 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
       });
   }, []);
 
-  // 🔥 Manual Search Filtering
   const search = searchQuery.toLowerCase();
 
   let filteredProducts = products.filter((product) => {
@@ -49,10 +48,9 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
   } else if (sortOrder === 'popularity') {
     filteredProducts.sort((a, b) => (b.numReviews || 0) - (a.numReviews || 0));
   } else if (sortOrder === 'rating-high-to-low') {
-    filteredProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)); // ✅ Only this
+    filteredProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
   }
 
-  // --- Styles ---
   const containerStyle = {
     marginTop: '3rem',
     fontFamily: '"Metal Mania", cursive',
@@ -136,7 +134,6 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
     fontSize: '0.9em'
   };
 
-  // --- Return ---
   if (loading) {
     return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Loading products...</p>;
   }
@@ -154,8 +151,8 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
           <option value="">Featured</option>
           <option value="high-to-low">Price: High to Low</option>
           <option value="low-to-high">Price: Low to High</option>
-          <option value="popularity">Most Popular</option> {/* 👈 New Option */}
-          <option value="rating-high-to-low">Highest Rated</option> {/* ✅ New */}
+          <option value="popularity">Most Popular</option>
+          <option value="rating-high-to-low">Highest Rated</option>
         </select>
         <FontAwesomeIcon icon={faArrowsUpDown} style={{ color: '#fff', fontSize: '1.5rem', marginLeft: '0.5rem' }} />
       </div>
@@ -180,7 +177,6 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
                 <img src={product.image} alt={product.name} style={productImageStyle} />
                 <h3 style={productNameStyle}>{product.name}</h3>
 
-                {/* ⭐ Show Average Rating and Review Count */}
                 <div style={{ margin: '0.5rem 0' }}>
                   <StarRating rating={product.averageRating || 0} editable={false} />
                   <div style={{ fontSize: '1rem', marginTop: '0.2rem' }}>
@@ -195,7 +191,23 @@ function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSo
 
                 <p style={productModelStyle}>Model: {product.model}</p>
                 <p style={productSerialStyle}>Serial: {product.serialNumber}</p>
-                <p style={productSerialStyle}>Price: ${product.price?.toFixed(2)}</p>
+
+                {/* ✅ Discount logic below */}
+                {product.discountPercentage > 0 ? (
+                  <div>
+                    <p style={{ textDecoration: 'line-through', color: '#bbb', margin: 0 }}>
+                      ${product.originalPrice?.toFixed(2) || (product.price / (1 - product.discountPercentage / 100)).toFixed(2)}
+                    </p>
+                    <p style={{ color: '#00e676', fontWeight: 'bold', margin: 0 }}>
+                      ${product.price?.toFixed(2)} &nbsp;
+                      <span style={{ fontSize: '0.9rem', color: '#ff5252' }}>
+                        ({product.discountPercentage}% OFF)
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <p style={productSerialStyle}>Price: ${product.price?.toFixed(2)}</p>
+                )}
               </div>
             </Link>
           ))}

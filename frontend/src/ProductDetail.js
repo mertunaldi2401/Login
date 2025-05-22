@@ -8,7 +8,6 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Get JWT token for wishlist operations
   const token = localStorage.getItem('token');
 
   const [product, setProduct] = useState(null);
@@ -16,10 +15,8 @@ function ProductDetail() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  // Wishlist state
   const [inWishlist, setInWishlist] = useState(false);
 
-  // Fetch product details
   useEffect(() => {
     fetch(`http://localhost:5001/products/${id}`)
       .then(res => res.json())
@@ -33,7 +30,6 @@ function ProductDetail() {
       });
   }, [id]);
 
-  // Check if product is in user's wishlist
   useEffect(() => {
     if (!product || !token) return;
     (async () => {
@@ -50,7 +46,6 @@ function ProductDetail() {
     })();
   }, [product, token]);
 
-  // Add to cart handler
   const addToCart = async () => {
     try {
       const headers = {};
@@ -85,7 +80,6 @@ function ProductDetail() {
     }
   };
 
-  // Toggle wishlist
   const toggleWishlist = async () => {
     if (!token) {
       alert('Please log in to manage your wishlist.');
@@ -97,14 +91,13 @@ function ProductDetail() {
         method,
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('Wishlist güncellenemedi');
+      if (!res.ok) throw new Error('Wishlist update failed');
       setInWishlist(!inWishlist);
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Styles omitted for brevity (unchanged)
   const detailContainerStyle = { padding: '2rem', color: '#fff', backgroundColor: '#000', minHeight: '100vh' };
   const contentStyle = { display: 'flex', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' };
   const imageStyle = { width: '400px', height: 'auto', borderRadius: '6px' };
@@ -118,26 +111,19 @@ function ProductDetail() {
   const backButtonStyle = { ...buttonStyle, background: 'rgba(255, 255, 255, 0.3)' };
   const selectStyle = { padding: '0.5rem', marginTop: '1rem', borderRadius: '4px', fontSize: '1rem', background: '#fff', color: '#000' };
 
-  if (loading) {
-    return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Loading product...</p>;
-  }
+  if (loading) return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Loading product...</p>;
+  if (!product) return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Product not found.</p>;
 
-  if (!product) {
-    return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Product not found.</p>;
-  }
+  const calculatedOriginal = product.originalPrice || (product.price / (1 - product.discountPercentage / 100));
 
   return (
     <div style={detailContainerStyle}>
       <div style={contentStyle}>
-        {product.image && (
-          <img src={product.image} alt={product.name} style={imageStyle} />
-        )}
-
+        {product.image && <img src={product.image} alt={product.name} style={imageStyle} />}
         <div style={rightSideStyle}>
           <div style={infoStyle}>
             <h1 style={titleStyle}>{product.name}</h1>
 
-            {/* ⭐ Average Rating */}
             <div style={{ marginTop: '0.5rem' }}>
               <StarRating rating={product.averageRating || 0} editable={false} />
               <div style={{ fontSize: '1.2rem', marginTop: '0.3rem' }}>
@@ -153,7 +139,21 @@ function ProductDetail() {
             <h2 style={modelStyle}>Model: {product.model}</h2>
             <p>Serial: {product.serialNumber}</p>
             <h2>Description: {product.description}</h2>
-            <h2 style={priceStyle}>Price: ${product.price}</h2>
+
+            {product.discountPercentage > 0 ? (
+              <>
+                <h2 style={{ textDecoration: 'line-through', color: '#bbb', fontSize: '1.1rem' }}>
+                  Original Price: ${calculatedOriginal.toFixed(2)}
+                </h2>
+                <h2 style={{ color: '#00e676', fontWeight: 'bold' }}>
+                  Discounted Price: ${product.price?.toFixed(2)}{' '}
+                  <span style={{ color: '#ff5252', fontSize: '1rem' }}>({product.discountPercentage}% OFF)</span>
+                </h2>
+              </>
+            ) : (
+              <h2 style={priceStyle}>Price: ${product.price?.toFixed(2)}</h2>
+            )}
+
             <p>Stock: {product.quantityInStock}</p>
 
             {product.quantityInStock > 0 && (
@@ -163,9 +163,7 @@ function ProductDetail() {
                 onChange={e => setQuantity(parseInt(e.target.value))}
               >
                 {[...Array(Math.min(product.quantityInStock, 10)).keys()].map(x => (
-                  <option key={x + 1} value={x + 1}>
-                    {x + 1}
-                  </option>
+                  <option key={x + 1} value={x + 1}>{x + 1}</option>
                 ))}
               </select>
             )}
@@ -177,43 +175,30 @@ function ProductDetail() {
                     Added to Cart
                   </span>
                 ) : (
-                  <button style={buttonStyle} onClick={addToCart}>
-                    Add to Cart
-                  </button>
+                  <button style={buttonStyle} onClick={addToCart}>Add to Cart</button>
                 )
               ) : (
-                <span style={{ color: 'red', fontWeight: 'bold', marginRight: '1rem' }}>
-                  Out of Stock
-                </span>
+                <span style={{ color: 'red', fontWeight: 'bold', marginRight: '1rem' }}>Out of Stock</span>
               )}
 
-              {/* Wishlist Button */}
-              <button
-                onClick={toggleWishlist}
-                style={{
-                  background: inWishlist ? '#c0392b' : '#27ae60',
-                  color: '#fff',
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  marginRight: '1rem'
-                }}
-              >
+              <button onClick={toggleWishlist} style={{
+                background: inWishlist ? '#c0392b' : '#27ae60',
+                color: '#fff',
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                marginRight: '1rem'
+              }}>
                 {inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
               </button>
 
-              <button style={backButtonStyle} onClick={() => navigate(-1)}>
-                Go Back
-              </button>
+              <button style={backButtonStyle} onClick={() => navigate(-1)}>Go Back</button>
             </div>
           </div>
-
-          <div style={reviewStyle}>
-            <ReviewSection />
-          </div>
+          <div style={reviewStyle}><ReviewSection /></div>
         </div>
       </div>
     </div>

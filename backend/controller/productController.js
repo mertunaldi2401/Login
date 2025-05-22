@@ -167,3 +167,35 @@ exports.getUnpricedProducts = async (req, res, next) => {
     next(err);
   }
 };
+
+// Set Discount (sales-manager only)
+exports.setDiscount = async (req, res) => {
+  const { id } = req.params;
+  const { discountPercentage } = req.body;
+
+  if (!req.user || req.user.role !== 'sales-manager') {
+    return res.status(403).json({ message: 'Only sales managers can apply discounts.' });
+  }
+
+  if (typeof discountPercentage !== 'number' || discountPercentage < 0 || discountPercentage > 100) {
+    return res.status(400).json({ message: 'Invalid discount percentage.' });
+  }
+
+  try {
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ message: 'Product not found.' });
+
+    if (!product.originalPrice) {
+      product.originalPrice = product.price;
+    }
+
+    product.discountPercentage = discountPercentage;
+    product.price = Math.round(product.originalPrice * (1 - discountPercentage / 100) * 100) / 100;
+
+    await product.save();
+    res.json({ message: 'Discount applied.', product });
+  } catch (err) {
+    console.error('Error applying discount:', err);
+    res.status(500).json({ message: 'Server error applying discount.' });
+  }
+};
