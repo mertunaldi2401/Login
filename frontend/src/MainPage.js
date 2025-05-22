@@ -1,27 +1,13 @@
-// ✅ MainPage.js
 import React, { useContext, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import Products from './Products';
 import { Link, useLocation } from 'react-router-dom';
 
-function MainPage({ searchQuery }) {
+export default function MainPage({ searchQuery }) {
   const { auth } = useContext(AuthContext);
-  // Derive a user‑friendly display name (username) for the welcome banner
-  const displayName = React.useMemo(() => {
-    if (!auth.user) return 'Guest';
-    // Case 1: auth.user is a plain string
-    if (typeof auth.user === 'string') {
-      return auth.user.split('@')[0];
-    }
-    // Case 2: auth.user is an object from backend
-    if (auth.user.username) return auth.user.username;
-    if (auth.user.email) return auth.user.email.split('@')[0];
-    return 'Guest';
-  }, [auth.user]);
+  const user = auth.user || {};
   const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const categoryQuery = params.get('category') || '';
-
+  const category = new URLSearchParams(location.search).get('category') || '';
   const [sortOrder, setSortOrder] = useState('');
 
   const pageStyle = {
@@ -29,8 +15,7 @@ function MainPage({ searchQuery }) {
     minHeight: '100vh',
     padding: '3rem 2rem',
     color: '#fff',
-    fontFamily: '"Metal Mania", cursive',
-    position: 'relative'
+    fontFamily: '"Metal Mania", cursive'
   };
 
   const headerStyle = {
@@ -39,70 +24,33 @@ function MainPage({ searchQuery }) {
     textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
   };
 
-  const titleStyle = {
-    fontSize: '4rem',
-    margin: 0,
-    color: '#d50000'
-  };
-
-  const subtitleStyle = {
-    fontSize: '1.5rem',
-    marginTop: '1rem'
-  };
-
-  const productsContainerStyle = {
-    background: 'linear-gradient(135deg, #d50000, #111)', // ✅ Red background for products box
-    padding: '2rem',
-    borderRadius: '8px',
-    boxShadow: '0 0 15px rgba(0,0,0,0.5)',
-    position: 'relative'
-  };
-
-  const cartButtonStyle = {
-    marginTop: '2rem',
-    background: 'rgba(255, 0, 0, 0.3)',
-    padding: '0.8rem 1.2rem',
-    border: 'none',
-    borderRadius: '4px',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 'bold'
-  };
-
   return (
     <div style={pageStyle}>
       <header style={headerStyle}>
-        <h1 style={titleStyle}>Rock Your World!</h1>
-        <p style={subtitleStyle}>
-          Welcome, {displayName}! Unleash the riffs with our epic collection of guitars and effects.
+        <h1 style={{ fontSize:'4rem', color:'#d50000', margin:0 }}>Rock Your World!</h1>
+        <p style={{ fontSize:'1.5rem', marginTop:'1rem' }}>
+          Welcome, {user.username || 'Guest'}! Unleash the riffs with our epic collection.
         </p>
       </header>
 
-      <section style={productsContainerStyle}>
-        {/* ✅ Pass sortOrder and setSortOrder to Products */}
+      <section>
         <Products
           searchQuery={searchQuery}
-          categoryFilter={categoryQuery}
+          categoryFilter={category}
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
         />
-
-        <div style={{ textAlign: 'center' }}>
-          {(auth.token || localStorage.getItem('guestId')) && (
-            <Link to="/cart">
-              <button style={cartButtonStyle}>Go to Cart</button>
-            </Link> 
-          )}
-          {typeof auth.user === 'string' && auth.user.startsWith('product-manager') && (
-            <Link to="/productmanager">
-              <button style={cartButtonStyle}>Product Manager Panel</button>
-            </Link>
-          )}
-        </div>
       </section>
+
+      <div style={{ textAlign:'center', marginTop:'2rem' }}>
+        <Link to="/cart"><button style={{ padding:'0.8rem 1.2rem' }}>Go to Cart</button></Link>
+        {user.role === 'product-manager' && (
+          <Link to="/productmanager"><button style={{ marginLeft:'1rem', padding:'0.8rem 1.2rem' }}>Product Manager</button></Link>
+        )}
+        {user.role === 'sales-manager' && (
+          <Link to="/salesmanager"><button style={{ marginLeft:'1rem', padding:'0.8rem 1.2rem' }}>Sales Manager</button></Link>
+        )}
+      </div>
     </div>
   );
 }
-
-export default MainPage;

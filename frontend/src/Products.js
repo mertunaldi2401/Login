@@ -1,208 +1,119 @@
-// ✅ Products.js (Fixed Search Filtering Fully + Added Rating Display)
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowsUpDown } from '@fortawesome/free-solid-svg-icons';
-import StarRating from './StarRating'; // ⭐ You must import StarRating component
+import StarRating from './StarRating';
 
-function Products({ searchQuery = '', categoryFilter = '', sortOrder = '', setSortOrder }) {
+export default function Products({
+  searchQuery = '',
+  categoryFilter = '',
+  sortOrder = '',
+  setSortOrder
+}) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch products on mount
   useEffect(() => {
-    const url = 'http://localhost:5001/products';
-
     setLoading(true);
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
+    fetch('http://localhost:5001/products')
+      .then(res => res.json())
+      .then(data => {
         setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Failed to fetch products:', err);
         setProducts([]);
         setLoading(false);
       });
   }, []);
 
-  // 🔥 Manual Search Filtering
-  const search = searchQuery.toLowerCase();
-
-  let filteredProducts = products.filter((product) => {
+  const q = searchQuery.toLowerCase();
+  let filtered = products.filter(p => {
     const matchesSearch =
-      product.name.toLowerCase().includes(search) ||
-      (product.model && product.model.toLowerCase().includes(search)) ||
-      (product.serialNumber && product.serialNumber.toLowerCase().includes(search)) ||
-      (product.description && product.description.toLowerCase().includes(search)) ||
-      (product.category && product.category.toLowerCase().includes(search));
-
-    const matchesCategory = !categoryFilter || product.category.toLowerCase() === categoryFilter.toLowerCase();
-
+      p.name.toLowerCase().includes(q) ||
+      (p.model && p.model.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q));
+    const matchesCategory =
+      !categoryFilter ||
+      p.category.toLowerCase() === categoryFilter.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
-  if (sortOrder === 'high-to-low') {
-    filteredProducts.sort((a, b) => b.price - a.price);
-  } else if (sortOrder === 'low-to-high') {
-    filteredProducts.sort((a, b) => a.price - b.price);
-  } else if (sortOrder === 'popularity') {
-    filteredProducts.sort((a, b) => (b.numReviews || 0) - (a.numReviews || 0));
-  } else if (sortOrder === 'rating-high-to-low') {
-    filteredProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)); // ✅ Only this
-  }
+  // Sort logic
+  if (sortOrder === 'high-to-low') filtered.sort((a, b) => b.price - a.price);
+  if (sortOrder === 'low-to-high') filtered.sort((a, b) => a.price - b.price);
+  if (sortOrder === 'popularity')
+    filtered.sort((a, b) => (b.numReviews || 0) - (a.numReviews || 0));
+  if (sortOrder === 'rating-high-to-low')
+    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
-  // --- Styles ---
-  const containerStyle = {
-    marginTop: '3rem',
-    fontFamily: '"Metal Mania", cursive',
-    color: '#fff',
-    position: 'relative'
-  };
-
-  const titleStyle = {
-    textAlign: 'center',
-    marginBottom: '1rem',
-    fontSize: '3rem',
-    fontWeight: 'bold',
-    textShadow: '2px 2px 5px rgba(0,0,0,0.7)'
-  };
-
-  const sortContainerStyle = {
-    position: 'absolute',
-    top: '0',
-    right: '0',
-    display: 'flex',
-    alignItems: 'center',
-    marginRight: '1rem'
-  };
-
-  const sortDropdownStyle = {
-    backgroundColor: '#111',
-    color: '#fff',
-    border: '1px solid #d50000',
-    padding: '0.5rem',
-    fontSize: '1rem',
-    borderRadius: '5px',
-    fontFamily: '"Metal Mania", cursive',
-    cursor: 'pointer',
-    marginLeft: '0.5rem'
-  };
-
-  const productsWrapperStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: '3rem'
-  };
-
-  const productCardStyle = {
-    border: '1px solid #333',
-    margin: '10px',
-    padding: '15px',
-    width: '220px',
-    height: '500px',
-    textAlign: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    color: '#fff',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-    borderRadius: '6px',
-    transition: 'transform 0.2s ease-in-out',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between'
-  };
-
-  const productImageStyle = {
-    maxWidth: '100%',
-    height: 'auto',
-    borderRadius: '4px'
-  };
-
-  const productNameStyle = {
-    fontSize: '1.2em',
-    margin: '10px 0',
-    color: '#fff'
-  };
-
-  const productModelStyle = {
-    marginBottom: '5px',
-    fontWeight: 'bold',
-    color: '#ffcc00'
-  };
-
-  const productSerialStyle = {
-    color: '#ccc',
-    fontSize: '0.9em'
-  };
-
-  // --- Return ---
   if (loading) {
-    return <p style={{ textAlign: 'center', fontSize: '1.5rem' }}>Loading products...</p>;
+    return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Loading products...</p>;
   }
 
   return (
-    <div style={containerStyle}>
-      <h1 style={titleStyle}>THOR'S EPIC COLLECTION</h1>
-
-      <div style={sortContainerStyle}>
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          style={sortDropdownStyle}
+    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem' }}>
+      {filtered.map(p => (
+        <Link
+          key={p._id}
+          to={`/product/${p._id}`}
+          style={{ textDecoration: 'none', color: 'inherit' }}
         >
-          <option value="">Featured</option>
-          <option value="high-to-low">Price: High to Low</option>
-          <option value="low-to-high">Price: Low to High</option>
-          <option value="popularity">Most Popular</option> {/* 👈 New Option */}
-          <option value="rating-high-to-low">Highest Rated</option> {/* ✅ New */}
-        </select>
-        <FontAwesomeIcon icon={faArrowsUpDown} style={{ color: '#fff', fontSize: '1.5rem', marginLeft: '0.5rem' }} />
-      </div>
-
-      {filteredProducts.length === 0 ? (
-        <p style={{ textAlign: 'center', fontSize: '1.2rem' }}>
-          No products match your search or category selection.
-        </p>
-      ) : (
-        <div style={productsWrapperStyle}>
-          {filteredProducts.map((product) => (
-            <Link
-              key={product._id}
-              to={`/product/${product._id}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
+          <div
+            style={{
+              background: '#111',
+              color: '#fff',
+              padding: '1rem',
+              borderRadius: '8px',
+              width: '220px',
+              position: 'relative'
+            }}
+          >
+            {p.discountPercentage > 0 && (
               <div
-                style={productCardStyle}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  background: '#d50000',
+                  padding: '0.2rem 0.5rem',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem',
+                  borderRadius: '0 0 4px 0'
+                }}
               >
-                <img src={product.image} alt={product.name} style={productImageStyle} />
-                <h3 style={productNameStyle}>{product.name}</h3>
-
-                {/* ⭐ Show Average Rating and Review Count */}
-                <div style={{ margin: '0.5rem 0' }}>
-                  <StarRating rating={product.averageRating || 0} editable={false} />
-                  <div style={{ fontSize: '1rem', marginTop: '0.2rem' }}>
-                    {product.averageRating ? `${product.averageRating}` : 'No rating yet'}
-                  </div>
-                  {product.numReviews > 0 && (
-                    <div style={{ fontSize: '0.8rem', color: '#bbb' }}>
-                      ({product.numReviews} Reviews)
-                    </div>
-                  )}
-                </div>
-
-                <p style={productModelStyle}>Model: {product.model}</p>
-                <p style={productSerialStyle}>Serial: {product.serialNumber}</p>
-                <p style={productSerialStyle}>Price: ${product.price?.toFixed(2)}</p>
+                -{p.discountPercentage}%
               </div>
-            </Link>
-          ))}
-        </div>
-      )}
+            )}
+
+            <img
+              src={p.image}
+              alt={p.name}
+              style={{ width: '100%', borderRadius: '4px' }}
+            />
+            <h3 style={{ margin: '0.5rem 0' }}>{p.name}</h3>
+            <StarRating rating={p.rating || 0} editable={false} />
+
+            {p.discountPercentage > 0 ? (
+              <p>
+                <span
+                  style={{
+                    textDecoration: 'line-through',
+                    color: '#aaa',
+                    marginRight: '0.5rem'
+                  }}
+                >
+                  ${p.originalPrice?.toFixed(2)}
+                </span>
+                <span>${p.price.toFixed(2)}</span>
+              </p>
+            ) : (
+              <p>${p.price.toFixed(2)}</p>
+            )}
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
-
-export default Products;

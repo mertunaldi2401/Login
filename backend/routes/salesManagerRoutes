@@ -1,0 +1,12 @@
+const express = require('express');
+const router = express.Router();
+const ctrl   = require('../controllers/salesManagerController');
+const { authenticateToken, verifySalesManager } = require('../middlewares/authMiddleware');
+
+router.use(authenticateToken, verifySalesManager);
+router.put('/set-price/:productId',    ctrl.setProductPrice);
+router.put('/set-discount/:productId', ctrl.setDiscount);
+router.get('/invoices',                ctrl.getInvoicesInRange);
+router.get('/revenue',                 ctrl.calculateRevenue);
+
+module.exports = router;
