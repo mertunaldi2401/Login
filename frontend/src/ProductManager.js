@@ -5,7 +5,7 @@ import './ProductManager.css';
 function ProductManager() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [deliveries, setDeliveries] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [newProduct, setNewProduct] = useState({ name: '', category: '', quantityInStock: '' });
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ function ProductManager() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-    fetchDeliveries();
+    fetchOrders();
     fetchReviews();
   }, []);
 
@@ -46,13 +46,12 @@ function ProductManager() {
     }
   };
 
-  const fetchDeliveries = async () => {
+  const fetchOrders = async () => {
     try {
-      // use the enriched list we added in deliveryRoutes.js
-      const res = await axios.get('http://localhost:5001/deliveries/all', { headers: authHeader });
-      setDeliveries(res.data);
+      const res = await axios.get('http://localhost:5001/orders/all', { headers: authHeader });
+      setOrders(res.data);
     } catch (err) {
-      console.error('Failed to fetch deliveries:', err);
+      console.error('Failed to fetch orders:', err);
     }
   };
 
@@ -151,12 +150,16 @@ function ProductManager() {
     }
   };
 
-  const handleDeliveryStatusUpdate = async (deliveryId) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await axios.patch(`http://localhost:5001/deliveries/${deliveryId}`, { status: 'Delivered' }, { headers: authHeader });
-      fetchDeliveries();
+      await axios.patch(
+        `http://localhost:5001/orders/${orderId}/status`,
+        { status: newStatus },
+        { headers: authHeader }
+      );
+      fetchOrders();
     } catch (err) {
-      console.error('Failed to update delivery status:', err);
+      console.error('Failed to update order status:', err.response?.data || err.message);
     }
   };
 
@@ -260,66 +263,50 @@ function ProductManager() {
       </div>
 
       <div className="delivery-list">
-        <h2>Delivery List</h2>
+        <h2>Orders / Deliveries</h2>
         <table>
           <thead>
             <tr>
-              <th>Delivery ID</th>
-              <th>Customer ID</th>
-              <th>Product ID(s)</th>
-              <th>Quantity</th>
-              <th>Total Price</th>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Product(s)</th>
+              <th>Qty</th>
+              <th>Total</th>
               <th>Delivery Address</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {deliveries.map(delivery => {
-              // does this delivery include “Product B” ?
-              const hasProductB = delivery.items?.some(
-                item => (item.product?.name || item.product) === 'Product B'
-              );
+            {orders.map(order => {
+              const hasProductB = order.items.some(it => it.product.name === 'Product B');
+
+              const addr = order.deliveryAddress;
+              const addressLine = addr
+                ? `${addr.address}, ${addr.city}, ${addr.province}, ${addr.country} (${addr.postalCode})`
+                : '-';
 
               return (
-                <tr
-                  key={delivery._id}
-                  className={hasProductB ? 'highlight-row' : undefined}
-                >
-                  <td>{delivery._id}</td>
-
-                  {/* customer id / username */}
-                  <td>{delivery.customer?.username || delivery.user}</td>
-
-                  {/* product ids or names */}
+                <tr key={order._id} className={hasProductB ? 'highlight-row' : ''}>
+                  <td>{order._id}</td>
+                  <td>{order.user?.username || order.user}</td>
                   <td>
-                    {delivery.items?.map(item => (
-                      <div key={item.product._id ?? item.product}>
-                        {item.product?.name || item.product}
-                      </div>
+                    {order.items.map(it => (
+                      <div key={it.product._id}>{it.product.name}</div>
                     ))}
                   </td>
-
-                  {/* quantities */}
                   <td>
-                    {delivery.items?.map(item => (
-                      <div key={item.product._id ?? item.product}>{item.quantity}</div>
+                    {order.items.map(it => (
+                      <div key={it.product._id}>{it.quantity}</div>
                     ))}
                   </td>
-
-                  <td>${delivery.totalPrice?.toFixed(2)}</td>
-                  <td>{delivery.address || delivery.deliveryAddress}</td>
-
-                  {/* status */}
-                  <td>{delivery.completed || delivery.status === 'delivered'
-                        ? 'delivered'
-                        : delivery.status}</td>
-
-                  {/* action button only when not yet delivered */}
+                  <td>${order.totalPrice.toFixed(2)}</td>
+                  <td>{addressLine}</td>
+                  <td>{order.status}</td>
                   <td>
-                    {delivery.completed || delivery.status === 'delivered' ? null : (
-                      <button onClick={() => handleDeliveryStatusUpdate(delivery._id)}>
-                        Mark as Delivered
+                    {order.status !== 'delivered' && (
+                      <button onClick={() => updateOrderStatus(order._id, 'delivered')}>
+                        Mark Delivered
                       </button>
                     )}
                   </td>

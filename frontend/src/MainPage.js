@@ -94,9 +94,16 @@ function MainPage({ searchQuery }) {
               <button style={cartButtonStyle}>Go to Cart</button>
             </Link> 
           )}
+          {auth.token && (
+            <Link to="/orders/history">
+              <button style={{ ...cartButtonStyle, marginLeft: '1rem' }}>
+                My Orders
+              </button>
+            </Link>
+          )}
           {typeof auth.user === 'string' && auth.user.startsWith('product-manager') && (
             <Link to="/productmanager">
-              <button style={cartButtonStyle}>Product Manager Panel</button>
+              <button style={{ ...cartButtonStyle, marginLeft: '1rem' }}>Product Manager Panel</button>
             </Link>
           )}
         </div>

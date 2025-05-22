@@ -21,6 +21,25 @@ router.post('/', authenticateToken, async (req, res) => {
 
     let totalPrice = 0;
 
+    // Extract delivery address
+    const { deliveryAddress } = req.body;
+    const requiredAddrFields = [
+      'firstName',
+      'lastName',
+      'address',
+      'city',
+      'postalCode',
+      'province',
+      'country',
+      'phone'
+    ];
+    if (
+      !deliveryAddress ||
+      !requiredAddrFields.every(f => typeof deliveryAddress[f] === 'string' && deliveryAddress[f].trim() !== '')
+    ) {
+      return res.status(400).json({ message: 'Delivery address is incomplete.' });
+    }
+
     // Check stock and calculate total price
     for (const item of cart.items) {
       if (item.quantity > item.product.quantityInStock) {
@@ -37,7 +56,8 @@ router.post('/', authenticateToken, async (req, res) => {
         quantity: item.quantity,
       })),
       totalPrice, // burada üstte hesapladığın değeri kaydet
-      status: 'processing'
+      status: 'processing',
+      deliveryAddress             // NEW
     });
 
     await order.save();
@@ -68,6 +88,9 @@ router.post('/', authenticateToken, async (req, res) => {
 
     res.status(201).json({ message: 'Order placed successfully!', order });
 
+    // Client code reminder:
+    // In Checkout.js, make sure to post { deliveryAddress: formData }
+
   } catch (err) {
     console.error('Order error:', err);
     res.status(500).json({ message: 'Failed to create order.' });
@@ -85,6 +108,26 @@ router.get('/history', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Error fetching order history:', err);
     res.status(500).json({ message: 'Failed to retrieve order history.' });
+  }
+});
+
+// GET /orders/all → Only product‑manager (or sales‑manager) can list every order
+router.get('/all', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'product-manager' && req.user.role !== 'sales-manager') {
+    return res.status(403).json({ message: 'Forbidden: insufficient role' });
+  }
+
+  try {
+    const orders = await Order.find()
+      .populate('user', 'username email')
+      .populate('items.product', 'name price')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching all orders:', err);
+    res.status(500).json({ message: 'Failed to retrieve orders.' });
   }
 });
 
@@ -138,20 +181,6 @@ router.patch('/:id/status', authenticateToken, async (req, res, next) => {
   } catch (err) {
     console.error('Order status update error:', err);
     return res.status(500).json({ message: 'Failed to update order status.' });
-  }
-});
-
-// GET /orders/all → Admin panel için tüm siparişleri getir
-router.get('/all', async (req, res) => {
-  try {
-    const orders = await Order.find()
-      .populate('user', 'username')
-      .sort({ createdAt: -1 });
-      
-    res.json(orders);
-  } catch (err) {
-    console.error('Error fetching all orders:', err);
-    res.status(500).json({ message: 'Failed to retrieve orders.' });
   }
 });
 

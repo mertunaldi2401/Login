@@ -101,9 +101,11 @@ function Checkout() {
 
     try {
       setIsPlacingOrder(true);
-      const res = await axios.post('http://localhost:5001/orders', {}, {
-        headers: getHeaders(),
-      });
+      const res = await axios.post(
+        'http://localhost:5001/orders',
+        { deliveryAddress: formData },
+        { headers: getHeaders() }
+      );
 
       const order = res.data.order;
       console.log('Order created:', order);

@@ -15,6 +15,7 @@ import ProductManager from './ProductManager';
 import SalesManager from './SalesManager'; // ✅ Updated to import the correct component
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
+import OrderHistory from './OrderHistory';
 
 function App() {
   const { auth, logout } = useContext(AuthContext);
@@ -190,6 +191,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/productmanager" element={<ProductManager />} />
         <Route path="/salesmanager" element={<SalesManager />} />
+        <Route path="/orders/history" element={<OrderHistory />} />
       </Routes>
     </div>
   );

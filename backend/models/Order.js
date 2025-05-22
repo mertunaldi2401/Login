@@ -23,6 +23,16 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  deliveryAddress: {
+    firstName:  { type: String, required: true, trim: true },
+    lastName:   { type: String, required: true, trim: true },
+    address:    { type: String, required: true, trim: true },
+    city:       { type: String, required: true, trim: true },
+    postalCode: { type: String, required: true, trim: true },
+    province:   { type: String, required: true, trim: true },
+    country:    { type: String, required: true, trim: true },
+    phone:      { type: String, required: true, trim: true }
+  },
   status: {
     type: String,
     enum: ['processing', 'in-transit', 'delivered', 'cancelled'],

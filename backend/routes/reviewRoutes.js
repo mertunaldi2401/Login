@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const Review = require('../models/Reviews');
 const Product = require('../models/Product');
 const authRequired = require('../middlewares/authMiddleware');
@@ -14,7 +14,7 @@ router.post(
   async (req, res) => {
     const { rating, comment } = req.body;
     const hasComment = comment && comment.trim().length > 0;
-    const { productId } = req.params;
+    const productId = req.params.productId || req.body.productId;
     const userId = req.user.id; // req.user.id doğrulama middleware'inden geliyor
 
     try {
