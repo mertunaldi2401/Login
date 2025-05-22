@@ -1,92 +1,189 @@
-import React, { useState } from 'react';
+// src/components/SalesManager.js
+
+import React, { useState, useRef } from 'react';
 import jsPDF from 'jspdf';
 import Chart from 'chart.js/auto';
-import './SalesManager.css'; // ✅ Import CSS
+import './SalesManager.css';
 
-function SalesManager() {
+export default function SalesManager() {
   const [discountRate, setDiscountRate] = useState('');
-  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState(''); // comma-separated IDs
   const [invoices, setInvoices] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [revenueData, setRevenueData] = useState([]);
+  const chartRef = useRef(null);
 
+  // proxy ayarlı: React dev server bunu http://localhost:5001/salesmanager olarak yönlendirir
+  const API_BASE = '/salesmanager'; 
+
+  // --- helper: response body'i bir kere oku, önce JSON.message dener, değilse raw text döner ---
+  const parseError = async (res) => {
+    const text = await res.text();
+    try {
+      const { message } = JSON.parse(text);
+      return message || text;
+    } catch {
+      return text;
+    }
+  };
+
+  // 1) Ürün indirimlerini uygula
   const applyDiscount = async () => {
-    await fetch('/api/salesmanager/apply-discount', {
-      method: 'POST',
-      body: JSON.stringify({ discountRate, productIds: selectedProducts }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    alert('Discount applied and users notified!');
+    const ids = selectedProducts
+      .split(',')
+      .map(i => i.trim())
+      .filter(i => i);
+
+    try {
+      await Promise.all(
+        ids.map(async productId => {
+          const res = await fetch(`${API_BASE}/set-discount/${productId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ discountPercentage: Number(discountRate) }),
+          });
+          if (!res.ok) {
+            const errText = await parseError(res);
+            throw new Error(errText);
+          }
+        })
+      );
+      alert('✅ Discount applied and notifications sent!');
+    } catch (err) {
+      alert(`❌ Error: ${err.message}`);
+    }
   };
 
+  // 2) Faturaları getir
   const fetchInvoices = async () => {
-    const res = await fetch(`/api/salesmanager/invoices?start=${startDate}&end=${endDate}`);
-    const data = await res.json();
-    setInvoices(data);
+    try {
+      const res = await fetch(
+        `${API_BASE}/invoices?startDate=${startDate}&endDate=${endDate}`
+      );
+      if (!res.ok) {
+        const errText = await parseError(res);
+        throw new Error(errText);
+      }
+      const data = await res.json();
+      setInvoices(data);
+    } catch (err) {
+      alert(`❌ Error: ${err.message}`);
+    }
   };
 
+  // 3) PDF export
   const exportPDF = () => {
     const doc = new jsPDF();
-    invoices.forEach((inv, i) => doc.text(`${i + 1}. ${inv.id} - $${inv.total}`, 10, 10 + i * 10));
+    invoices.forEach((inv, i) => {
+      doc.text(
+        `${i + 1}. Order #${inv._id} — $${inv.totalPrice.toFixed(2)}`,
+        10,
+        10 + i * 10
+      );
+    });
     doc.save('invoices.pdf');
   };
 
+  // 4) Gelir/Maliyet/Kâr hesapla ve chart çiz
   const calculateRevenue = async () => {
-    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`);
-    const data = await res.json();
-    setRevenueData(data);
-
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: data.map(d => d.date),
-        datasets: [
-          {
-            label: 'Revenue',
-            data: data.map(d => d.revenue),
-            borderColor: 'green'
-          },
-          {
-            label: 'Profit',
-            data: data.map(d => d.profit),
-            borderColor: 'blue'
-          }
-        ]
+    try {
+      const res = await fetch(
+        `${API_BASE}/revenue?startDate=${startDate}&endDate=${endDate}`
+      );
+      if (!res.ok) {
+        const errText = await parseError(res);
+        throw new Error(errText);
       }
-    });
+      const { totalRevenue, totalCost, profit } = await res.json();
+      const ctx = chartRef.current.getContext('2d');
+      if (chartRef.current._chart) chartRef.current._chart.destroy();
+      chartRef.current._chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Revenue', 'Cost', 'Profit'],
+          datasets: [{ label: '₺', data: [totalRevenue, totalCost, profit] }],
+        },
+        options: { responsive: true, maintainAspectRatio: false },
+      });
+    } catch (err) {
+      alert(`❌ Error: ${err.message}`);
+    }
   };
 
   return (
     <div className="sales-manager-container">
-      <h2>Sales Manager Dashboard</h2>
+      {/* ===== Discount Section ===== */}
+      <section>
+        <h3>Sales Manager Dashboard</h3>
+        <div className="field">
+          <label>Discount %:</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={discountRate}
+            onChange={e => setDiscountRate(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label>Product IDs (comma separated):</label>
+          <input
+            type="text"
+            value={selectedProducts}
+            onChange={e => setSelectedProducts(e.target.value)}
+          />
+        </div>
+        <button className="btn" onClick={applyDiscount}>
+          Apply Discount
+        </button>
+      </section>
 
-      <div>
-        <h3>Set Discount</h3>
-        <input placeholder="Discount %" value={discountRate} onChange={e => setDiscountRate(e.target.value)} />
-        <input placeholder="Product IDs (comma-separated)" onChange={e => setSelectedProducts(e.target.value.split(','))} />
-        <button onClick={applyDiscount}>Apply Discount</button>
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
+      {/* ===== Invoices Section ===== */}
+      <section>
         <h3>View Invoices</h3>
-        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-        <button onClick={fetchInvoices}>Load Invoices</button>
-        <button onClick={exportPDF}>Save as PDF</button>
-        <ul>
-          {invoices.map(inv => <li key={inv.id}>Invoice #{inv.id} - ${inv.total}</li>)}
+        <div className="field">
+          <label>Start Date:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label>End Date:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+          />
+        </div>
+        <button className="btn" onClick={fetchInvoices}>
+          Load Invoices
+        </button>
+        <button className="btn secondary" onClick={exportPDF}>
+          Save as PDF
+        </button>
+        <ul className="invoice-list">
+          {invoices.map(inv => (
+            <li key={inv._id}>
+              Order #{inv._id} — ${inv.totalPrice.toFixed(2)}
+            </li>
+          ))}
         </ul>
-      </div>
+      </section>
 
-      <div style={{ marginTop: '2rem' }}>
+      {/* ===== Revenue & Profit Section ===== */}
+      <section>
         <h3>Revenue & Profit</h3>
-        <button onClick={calculateRevenue}>Calculate</button>
-        <canvas id="revenueChart" width="600" height="300"></canvas>
-      </div>
+        <button className="btn" onClick={calculateRevenue}>
+          Calculate
+        </button>
+        <div className="chart-wrapper">
+          <canvas ref={chartRef} />
+        </div>
+      </section>
     </div>
   );
 }
-
-export default SalesManager;
