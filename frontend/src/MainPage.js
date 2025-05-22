@@ -101,9 +101,19 @@ function MainPage({ searchQuery }) {
               </button>
             </Link>
           )}
-          {typeof auth.user === 'string' && auth.user.startsWith('product-manager') && (
+          {auth.user?.role === 'customer' && (
+            <Link to="/orders/history">
+              <button style={{ ...cartButtonStyle, marginLeft: '1rem' }}>My Orders</button>
+            </Link>
+          )}
+          {auth.user?.role === 'product-manager' && (
             <Link to="/productmanager">
               <button style={{ ...cartButtonStyle, marginLeft: '1rem' }}>Product Manager Panel</button>
+            </Link>
+          )}
+          {auth.user?.role === 'sales-manager' && (
+            <Link to="/salesmanager">
+              <button style={{ ...cartButtonStyle, marginLeft: '1rem' }}>Sales Manager Panel</button>
             </Link>
           )}
         </div>

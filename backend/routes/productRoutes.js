@@ -9,6 +9,13 @@ const authenticateToken = require('../middlewares/authMiddleware');
 // ✅ Get all products (with average rating and reviews)
 router.get('/', productController.getAllProducts);
 
+// ...then at the end:
+router.get(
+  '/unpriced',
+  authenticateToken,
+  productController.getUnpricedProducts
+);
+
 // ✅ Get a single product by ID (with average rating and reviews)
 router.get('/:id', productController.getProductById);
 
@@ -91,5 +98,4 @@ router.patch(
     }
   }
 );
-
 module.exports = router;

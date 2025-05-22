@@ -67,7 +67,17 @@ async function seed() {
         items: [{ product: prodMap['Product E']._id, quantity: 1 }],
         totalPrice: prodMap['Product E'].price,
         status: 'delivered',
-        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 40)
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 40),
+        deliveryAddress: {
+          phone: "555-1234",
+          country: "Turkey",
+          province: "Istanbul",
+          postalCode: "34000",
+          city: "Istanbul",
+          address: "Demo Street 123",
+          lastName: "Customer",
+          firstName: "Demo"
+        }
       },
       // Product F: delivered <1 month ago (~15 days ago)
       {
@@ -75,7 +85,17 @@ async function seed() {
         items: [{ product: prodMap['Product F']._id, quantity: 1 }],
         totalPrice: prodMap['Product F'].price,
         status: 'delivered',
-        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 15)
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 15),
+        deliveryAddress: {
+          phone: "555-1234",
+          country: "Turkey",
+          province: "Istanbul",
+          postalCode: "34000",
+          city: "Istanbul",
+          address: "Demo Street 123",
+          lastName: "Customer",
+          firstName: "Demo"
+        }
       },
       // Product G: processing (recent)
       {
@@ -83,7 +103,17 @@ async function seed() {
         items: [{ product: prodMap['Product G']._id, quantity: 1 }],
         totalPrice: prodMap['Product G'].price,
         status: 'processing',
-        createdAt: new Date(now)
+        createdAt: new Date(now),
+        deliveryAddress: {
+          phone: "555-1234",
+          country: "Turkey",
+          province: "Istanbul",
+          postalCode: "34000",
+          city: "Istanbul",
+          address: "Demo Street 123",
+          lastName: "Customer",
+          firstName: "Demo"
+        }
       },
       // Product H: in-transit (recent)
       {
@@ -91,7 +121,17 @@ async function seed() {
         items: [{ product: prodMap['Product H']._id, quantity: 1 }],
         totalPrice: prodMap['Product H'].price,
         status: 'in-transit',
-        createdAt: new Date(now)
+        createdAt: new Date(now),
+        deliveryAddress: {
+          phone: "555-1234",
+          country: "Turkey",
+          province: "Istanbul",
+          postalCode: "34000",
+          city: "Istanbul",
+          address: "Demo Street 123",
+          lastName: "Customer",
+          firstName: "Demo"
+        }
       }
     ];
     await Order.insertMany(ordersData);

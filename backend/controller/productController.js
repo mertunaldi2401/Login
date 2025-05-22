@@ -93,38 +93,43 @@
     }
   };
 
-// Create a new product (product-manager only)
-exports.createProduct = async (req, res, next) => {
-  if (req.user.role !== 'product-manager') {
-    return res.status(403).json({ message: 'Forbidden: insufficient role' });
-  }
-  const { name, model, description, quantityInStock, image, category, brand } = req.body;
-
-  // Validate required fields
-  if (!name || typeof name !== 'string') {
-    return res.status(400).json({ message: 'Invalid or missing product name.' });
-  }
-
-  // Don't require price, it will be set later by sales manager!
-  try {
-    const product = new Product({
-      name,
-      model,
-      description,
-      quantityInStock,
-      price: 0, // Always 0 at creation
-      cost: 0,  // Always 0 at creation
-      image,
-      category,
-      brand,
-      priceSetBySalesManager: false // Mark as not set yet
-    });
-    await product.save();
-    res.status(201).json({ message: 'Product created.', product });
-  } catch (err) {
-    next(err);
-  }
-};
+  exports.createProduct = async (req, res, next) => {
+    if (req.user.role !== 'product-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+    const { name, model, description, quantityInStock, image, category, brand } = req.body;
+  
+    // Validate required fields
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ message: 'Invalid or missing product name.' });
+    }
+    if (quantityInStock == null || typeof quantityInStock !== 'number' || quantityInStock < 0) {
+      return res.status(400).json({ message: 'Invalid or missing quantityInStock.' });
+    }
+    if (!category || typeof category !== 'string') {
+      return res.status(400).json({ message: 'Invalid or missing category.' });
+    }
+  
+    // Do NOT allow price or cost fields to be set by frontend!
+    try {
+      const product = new Product({
+        name,
+        model,
+        description,
+        quantityInStock,
+        price: 0, // Always 0 at creation
+        // Do NOT send cost; let the schema default (price/2)
+        image,
+        category,
+        brand,
+        priceSetBySalesManager: false // Mark as not set yet
+      });
+      await product.save();
+      res.status(201).json({ message: 'Product created.', product });
+    } catch (err) {
+      next(err);
+    }
+  };
 
 // Delete a product (product-manager only)
 exports.deleteProduct = async (req, res, next) => {
@@ -143,6 +148,21 @@ exports.deleteProduct = async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found.' });
     }
     res.json({ message: 'Product deleted.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get all products that still need pricing (sales-manager only)
+exports.getUnpricedProducts = async (req, res, next) => {
+  if (req.user.role !== 'sales-manager') {
+    return res.status(403).json({ message: 'Forbidden: insufficient role' });
+  }
+  try {
+    const products = await Product.find({ priceSetBySalesManager: false })
+      .select('-__v')
+      .lean();
+    res.json(products);
   } catch (err) {
     next(err);
   }

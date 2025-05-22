@@ -1,27 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import jsPDF from 'jspdf';
 import Chart from 'chart.js/auto';
 import './SalesManager.css'; // ✅ Import CSS
+import { AuthContext } from './AuthContext';
 
 function SalesManager() {
-  const [discountRate, setDiscountRate] = useState('');
-  const [selectedProducts, setSelectedProducts] = useState([]);
+  const { auth } = useContext(AuthContext);
+  const token = auth.token || localStorage.getItem('token');
+  const authHeader = { Authorization: `Bearer ${token}` };
+
+  const [discounts, setDiscounts] = useState([{ productId: '', rate: '' }]);
   const [invoices, setInvoices] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [revenueData, setRevenueData] = useState([]);
 
+  const [unpricedProducts, setUnpricedProducts] = useState([]);
+  const [newPrices, setNewPrices] = useState({});
+  const [refunds, setRefunds] = useState([]);
+
+  useEffect(() => {
+    const fetchUnpriced = async () => {
+      try {
+        const res = await fetch('http://localhost:5001/products/unpriced', {
+          headers: authHeader
+        });
+        const unpriced = await res.json();
+        setUnpricedProducts(unpriced);
+      } catch (err) {
+        console.error('Failed to fetch unpriced products:', err);
+        setUnpricedProducts([]);
+      }
+    };
+    fetchUnpriced();
+
+    // Fetch refund requests for sales manager
+    const fetchRefunds = async () => {
+      try {
+        const res = await fetch('http://localhost:5001/api/salesmanager/refund-requests', { headers: authHeader });
+        const data = await res.json();
+        setRefunds(data);
+      } catch (err) {
+        setRefunds([]);
+      }
+    };
+    fetchRefunds();
+  }, []);
+
+  // Handler for changing a field in a discount entry
+  const handleDiscountChange = (index, field, value) => {
+    setDiscounts(discounts =>
+      discounts.map((d, i) =>
+        i === index ? { ...d, [field]: value } : d
+      )
+    );
+  };
+
+  // Handler to add a new discount row
+  const addDiscountRow = () => {
+    setDiscounts(discounts => [...discounts, { productId: '', rate: '' }]);
+  };
+
+  // Handler to remove a discount row
+  const removeDiscountRow = (index) => {
+    setDiscounts(discounts => discounts.filter((_, i) => i !== index));
+  };
+
+  // Update applyDiscount to use the new discounts array
   const applyDiscount = async () => {
+    // Prepare cleaned data
+    const toSend = discounts
+      .filter(d => d.productId && d.rate)
+      .map(d => ({ productId: d.productId, rate: Number(d.rate) }));
+
+    if (toSend.length === 0) {
+      alert('Please enter at least one valid product and discount.');
+      return;
+    }
+
     await fetch('/api/salesmanager/apply-discount', {
       method: 'POST',
-      body: JSON.stringify({ discountRate, productIds: selectedProducts }),
-      headers: { 'Content-Type': 'application/json' }
+      body: JSON.stringify({ discounts: toSend }),
+      headers: { 'Content-Type': 'application/json', ...authHeader }
     });
     alert('Discount applied and users notified!');
   };
 
   const fetchInvoices = async () => {
-    const res = await fetch(`/api/salesmanager/invoices?start=${startDate}&end=${endDate}`);
+    const res = await fetch(`/api/salesmanager/invoices?start=${startDate}&end=${endDate}`, {
+      headers: authHeader
+    });
     const data = await res.json();
     setInvoices(data);
   };
@@ -33,12 +101,23 @@ function SalesManager() {
   };
 
   const calculateRevenue = async () => {
-    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`);
+    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, {
+      headers: authHeader
+    });
     const data = await res.json();
     setRevenueData(data);
 
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(ctx, {
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // Destroy any previous chart instance if it exists
+    if (window.revenueChartInstance) {
+      window.revenueChartInstance.destroy();
+    }
+
+    window.revenueChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
         labels: data.map(d => d.date),
@@ -46,16 +125,50 @@ function SalesManager() {
           {
             label: 'Revenue',
             data: data.map(d => d.revenue),
-            borderColor: 'green'
+            borderColor: 'green',
+            fill: false
           },
           {
             label: 'Profit',
             data: data.map(d => d.profit),
-            borderColor: 'blue'
+            borderColor: 'blue',
+            fill: false
           }
         ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
       }
     });
+  };
+
+  const handlePriceChange = (productId, value) => {
+    setNewPrices(prev => ({ ...prev, [productId]: value }));
+  };
+
+  const handleSetPrice = async (productId) => {
+    const price = Number(newPrices[productId]);
+    if (isNaN(price) || price < 0) {
+      alert('Please enter a valid non-negative price.');
+      return;
+    }
+    try {
+      await fetch(`http://localhost:5001/products/${productId}/set-price`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeader
+        },
+        body: JSON.stringify({ price })
+      });
+      alert('Price set successfully!');
+      // Remove from list
+      setUnpricedProducts(unpricedProducts.filter(p => p._id !== productId));
+    } catch (err) {
+      console.error('Failed to set price:', err);
+      alert('Error setting price.');
+    }
   };
 
   return (
@@ -63,10 +176,58 @@ function SalesManager() {
       <h2>Sales Manager Dashboard</h2>
 
       <div>
-        <h3>Set Discount</h3>
-        <input placeholder="Discount %" value={discountRate} onChange={e => setDiscountRate(e.target.value)} />
-        <input placeholder="Product IDs (comma-separated)" onChange={e => setSelectedProducts(e.target.value.split(','))} />
-        <button onClick={applyDiscount}>Apply Discount</button>
+        <h3>Set Discounts Per Product</h3>
+        {discounts.map((discount, idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <input
+              placeholder="Product ID"
+              value={discount.productId}
+              onChange={e => handleDiscountChange(idx, 'productId', e.target.value)}
+              style={{ marginRight: '1rem' }}
+            />
+            <input
+              placeholder="Discount %"
+              type="number"
+              value={discount.rate}
+              onChange={e => handleDiscountChange(idx, 'rate', e.target.value)}
+              style={{ width: '80px', marginRight: '1rem' }}
+            />
+            {discounts.length > 1 && (
+              <button onClick={() => removeDiscountRow(idx)} style={{ marginRight: '1rem' }}>
+                Remove
+              </button>
+            )}
+            {idx === discounts.length - 1 && (
+              <button onClick={addDiscountRow}>Add</button>
+            )}
+          </div>
+        ))}
+        <button onClick={applyDiscount} style={{ marginTop: '1rem' }}>Apply Discounts</button>
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <h3>Set Price for New Products</h3>
+        {unpricedProducts.length === 0 ? (
+          <p>All products are priced.</p>
+        ) : (
+          <ul>
+            {unpricedProducts.map(product => (
+              <li key={product._id}>
+                {product.name} (Current: ${product.price})
+                <input
+                  type="number"
+                  placeholder="New Price"
+                  value={newPrices[product._id] || ''}
+                  onChange={e => handlePriceChange(product._id, e.target.value)}
+                  style={{ width: '80px', marginLeft: '1rem' }}
+                />
+                <button onClick={() => handleSetPrice(product._id)} style={{ marginLeft: '0.5rem' }}>
+                  Set Price
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div style={{ marginTop: '2rem' }}>
@@ -84,6 +245,51 @@ function SalesManager() {
         <h3>Revenue & Profit</h3>
         <button onClick={calculateRevenue}>Calculate</button>
         <canvas id="revenueChart" width="600" height="300"></canvas>
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <h3>Refund Requests</h3>
+        {refunds.length === 0 ? (
+          <p>No refund requests.</p>
+        ) : (
+          <ul>
+            {refunds.map(refund => (
+              <li key={refund._id} style={{ marginBottom: '1rem' }}>
+                <strong>{refund.productName}</strong> requested by {refund.customerName} for ${refund.amount}<br />
+                Reason: {refund.reason} <br />
+                Status: {refund.status}
+                {refund.status === 'pending' && (
+                  <>
+                    <button
+                      style={{ marginLeft: '1rem' }}
+                      onClick={async () => {
+                        // Approve refund API
+                        await fetch(`http://localhost:5001/api/salesmanager/refund/${refund._id}/approve`, {
+                          method: 'POST',
+                          headers: authHeader
+                        });
+                        alert('Refund approved. Customer will be notified and stock updated!');
+                        setRefunds(refunds => refunds.map(r => r._id === refund._id ? { ...r, status: 'approved' } : r));
+                      }}
+                    >Approve</button>
+                    <button
+                      style={{ marginLeft: '0.5rem' }}
+                      onClick={async () => {
+                        // Deny refund API
+                        await fetch(`http://localhost:5001/api/salesmanager/refund/${refund._id}/deny`, {
+                          method: 'POST',
+                          headers: authHeader
+                        });
+                        alert('Refund denied.');
+                        setRefunds(refunds => refunds.map(r => r._id === refund._id ? { ...r, status: 'denied' } : r));
+                      }}
+                    >Deny</button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
