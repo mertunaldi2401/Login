@@ -12,7 +12,7 @@ import Admin from './Admin';
 import Profile from './Profile';
 import InvoicePage from './InvoicePage';
 import ProductManager from './ProductManager';
-import SalesManager from './SalesManager'; // ✅ Updated to import the correct component
+import SalesManager from './components/SalesManager';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faUser } from '@fortawesome/free-solid-svg-icons';
 

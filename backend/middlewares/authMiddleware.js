@@ -3,10 +3,9 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-
 const authenticateToken = (req, res, next) => {
   console.log('Incoming auth header:', req.headers.authorization);
-  
+
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -15,20 +14,23 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
+    // Token’ı doğrula ve payload’u al
     const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Buraya role’u da ekliyoruz
     req.user = {
-      id: decoded.id, // Burada id'yi doğru şekilde ayarlıyoruz
+      id: decoded.id,
       username: decoded.username,
       email: decoded.email,
+      role: decoded.role   // <<< eklenen satır
     };
 
-    // Log to check if user is correctly decoded
-    console.log('Decoded user:', req.user);
-    
+  console.log('Decoded user:', req.user);
+
     next();
   } catch (err) {
     console.error('Token verification failed:', err);
-    res.status(403).json({ message: 'Invalid or expired token.' });
+    return res.status(403).json({ message: 'Invalid or expired token.' });
   }
 };
 

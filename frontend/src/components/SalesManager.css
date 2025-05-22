@@ -1,3 +1,6 @@
+/* SalesManager.css */
+
+/* ===== Container & Genel ===== */
 .sales-manager-container {
   padding: 2rem;
   background-color: #111;
@@ -6,7 +9,7 @@
   min-height: 100vh;
 }
 
-.sales-manager-container h2, 
+.sales-manager-container h2,
 .sales-manager-container h3 {
   text-align: center;
   margin-bottom: 1rem;
@@ -48,4 +51,36 @@
   margin-bottom: 0.5rem;
   padding: 0.75rem;
   border-radius: 4px;
+}
+
+/* ===== Refund Kartları ===== */
+.refund-card {
+  background-color: #222;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.refund-card p {
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+/* Approve / Deny Butonları */
+.refund-card .btn.approve {
+  background-color: #2ecc71;
+  margin-right: 0.5rem;
+}
+
+.refund-card .btn.approve:hover {
+  background-color: #27ae60;
+}
+
+.refund-card .btn.deny {
+  background-color: #e74c3c;
+}
+
+.refund-card .btn.deny:hover {
+  background-color: #c0392b;
 }

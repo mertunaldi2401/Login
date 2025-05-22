@@ -1,56 +1,61 @@
+// src/Profile.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const token = localStorage.getItem('token');
 
-  // Profile bilgileri
+  // Profile
   const [profile, setProfile] = useState({ username: '', email: '' });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState(null);
 
-  // Siparişler
+  // Orders
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [ordersError, setOrdersError] = useState(null);
 
-  // Wishlist
+  // Wishlist (unchanged)
   const [wishlist, setWishlist] = useState([]);
   const [loadingWishlist, setLoadingWishlist] = useState(true);
   const [wishlistError, setWishlistError] = useState(null);
 
-  // Profil verisini çek
   useEffect(() => {
+    // fetch profile
     fetch('http://localhost:5001/users/profile', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(res => { if (!res.ok) throw new Error('Failed to fetch profile'); return res.json(); })
+      .then(res => { if (!res.ok) throw new Error('Failed to fetch profile'); return res.json() })
       .then(data => setProfile({ username: data.username, email: data.email }))
       .catch(err => setProfileError(err.message))
       .finally(() => setLoadingProfile(false));
-  }, [token]);
 
-  // Siparişleri çek
-  useEffect(() => {
+    // fetch orders
     fetch('http://localhost:5001/orders/history', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(res => { if (!res.ok) throw new Error('Failed to fetch orders'); return res.json(); })
+      .then(res => { if (!res.ok) throw new Error('Failed to fetch orders'); return res.json() })
       .then(data => setOrders(data))
       .catch(err => setOrdersError(err.message))
       .finally(() => setLoadingOrders(false));
-  }, [token]);
 
-  // Wishlist'i çek
-  useEffect(() => {
+    // fetch wishlist
     fetch('http://localhost:5001/wishlist', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(res => { if (!res.ok) throw new Error('Failed to fetch wishlist'); return res.json(); })
+      .then(res => { if (!res.ok) throw new Error('Failed to fetch wishlist'); return res.json() })
       .then(data => setWishlist(data))
       .catch(err => setWishlistError(err.message))
       .finally(() => setLoadingWishlist(false));
   }, [token]);
+
+  const refreshOrders = async () => {
+    const res = await fetch('http://localhost:5001/orders/history', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    setOrders(data);
+  };
 
   if (loadingProfile || loadingOrders || loadingWishlist) {
     return <p style={{ padding: '2rem' }}>Loading...</p>;
@@ -82,69 +87,82 @@ const Profile = () => {
       </h3>
       {orders.length > 0 ? (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {orders.map(order => (
-            <li key={order._id} style={{
-              marginBottom: '1rem',
-              padding: '1rem',
-              border: '1px solid #eee',
-              borderRadius: '5px',
-              background: '#fafafa'
-            }}>
-              <p><strong>🆔 Order ID:</strong> {order._id}</p>
-              <p><strong>📅 Date:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
-              <p><strong>💰 Total:</strong> ${order.totalPrice.toFixed(2)}</p>
-              <p><strong>🚚 Status:</strong>
-                <span style={{
-                  marginLeft: '.5rem',
-                  color:
-                    order.status === 'processing'   ? '#f39c12' :
-                    order.status === 'in-transit'    ? '#3498db' :
-                    order.status === 'cancelled'     ? '#e74c3c' :
-                                                      '#2ecc71',
-                  fontWeight: 'bold'
-                }}>
-                  {order.status}
-                </span>
-              </p>
-              {order.status === 'processing' && (
-                <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`http://localhost:5001/orders/${order._id}/cancel`, {
-                        method: 'PATCH',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: `Bearer ${token}`
+          {orders.map(order => {
+            const deliveredAt = new Date(order.updatedAt);
+            const ageMs = Date.now() - deliveredAt.getTime();
+            const canRefund = order.status === 'delivered' && ageMs <= 30 * 24 * 60 * 60 * 1000;
+
+            return (
+              <li key={order._id} style={{
+                marginBottom: '1rem',
+                padding: '1rem',
+                border: '1px solid #eee',
+                borderRadius: '5px',
+                background: '#fafafa'
+              }}>
+                <p><strong>🆔 Order ID:</strong> {order._id}</p>
+                <p><strong>📅 Date:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
+                <p><strong>💰 Total:</strong> ${order.totalPrice.toFixed(2)}</p>
+                <p><strong>🚚 Status:</strong>
+                  <span style={{
+                    marginLeft: '.5rem',
+                    color:
+                      order.status === 'processing'   ? '#f39c12' :
+                      order.status === 'in-transit'    ? '#3498db' :
+                      order.status === 'refunded'      ? '#e74c3c' :
+                                                        '#2ecc71',
+                    fontWeight: 'bold'
+                  }}>
+                    {order.status}
+                  </span>
+                </p>
+
+                {/* Refund button for delivered */}
+                {order.status === 'delivered' && (
+                  <button
+                    disabled={!canRefund}
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `http://localhost:5001/orders/${order._id}/return`,
+                          {
+                            method: 'PATCH',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              Authorization: `Bearer ${token}`
+                            }
+                          }
+                        );
+                        if (!res.ok) {
+                          const { message } = await res.json();
+                          throw new Error(message || 'Refund request failed');
                         }
-                      });
-                      if (!res.ok) throw new Error('Failed to cancel order');
-                      alert('Order successfully canceled');
-                      const refreshed = await fetch('http://localhost:5001/orders/history', {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-                      const updatedOrders = await refreshed.json();
-                      setOrders(updatedOrders);
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }}
-                  style={{
-                    marginTop: '.5rem',
-                    padding: '.4rem .8rem',
-                    backgroundColor: '#e74c3c',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel Order
-                </button>
-              )}
-            </li>
-          ))}
+                        alert('Refund requested successfully!');
+                        await refreshOrders();
+                      } catch (err) {
+                        alert(err.message);
+                      }
+                    }}
+                    style={{
+                      marginTop: '.5rem',
+                      padding: '.4rem .8rem',
+                      backgroundColor: canRefund ? '#27ae60' : '#bdc3c7',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: canRefund ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    {canRefund ? 'Request Refund' : 'Refund Unavailable'}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
-      ) : <p style={{ color: '#888' }}>You have no past orders.</p>}
+      ) : (
+        <p style={{ color: '#888' }}>You have no past orders.</p>
+      )}
 
       {/* WISHLIST */}
       <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '.5rem', marginTop: '2rem' }}>
@@ -164,7 +182,7 @@ const Profile = () => {
                     headers: { Authorization: `Bearer ${token}` }
                   });
                   if (res.ok) setWishlist(wishlist.filter(w => w._id !== item._id));
-                  else alert('Çıkarma başarısız');
+                  else alert('Failed to remove');
                 }}
                 style={{
                   backgroundColor: '#e74c3c',
