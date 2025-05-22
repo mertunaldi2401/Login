@@ -128,12 +128,26 @@ function ProductManager() {
     }
   };
 
-  const handleApproveReview = async (reviewId) => {
+  const handleApproveReview = async (reviewObj) => {
     try {
-      await axios.post(`http://localhost:5001/reviews/approve/${reviewId}`, {}, { headers: authHeader });
-      setReviews(reviews.filter((review) => review._id !== reviewId));
+      // reviewObj.productId is populated (either ObjectId string or { _id, name })
+      const productId =
+        reviewObj.productId?._id || reviewObj.productId; // fallback
+
+      await axios.put(
+        `http://localhost:5001/products/${productId}/reviews/${reviewObj._id}/approve`,
+        {},
+        { headers: authHeader }
+      );
+
+      // Notify all open tabs (customers) to refresh reviews
+      window.localStorage.setItem('reviewRefresh', Date.now().toString());
+
+      // remove it from local state
+      setReviews(reviews.filter(r => r._id !== reviewObj._id));
     } catch (err) {
       console.error('Failed to approve review:', err);
+      alert('Could not approve review.');
     }
   };
 
@@ -318,13 +332,26 @@ function ProductManager() {
 
       <div className="review-list">
         <h2>Unapproved Reviews</h2>
-        <ul>
-          {reviews.map((review) => (
-            <li key={review._id}>
-              {review.text} - {review.user}
-              <button onClick={() => handleApproveReview(review._id)}>Approve</button>
-            </li>
-          ))}
+        <ul className="unapproved-review-list">
+          {reviews.length === 0 ? (
+            <li>No unapproved reviews.</li>
+          ) : (
+            reviews.map((review) => (
+              <li key={review._id} style={{ marginBottom: '1rem' }}>
+                <strong>{review.productId?.name || review.productId}</strong>{' '}
+                — by {review.userId?.username || review.userId} <br />
+                Rating: {review.rating} ★ <br />
+                Comment: <em>{review.comment || '(no comment)'}</em>{' '}
+                <button
+                  className="review-action-btn"
+                  onClick={() => handleApproveReview(review)}
+                  style={{ marginLeft: 8 }}
+                >
+                  Approve
+                </button>
+              </li>
+            ))
+          )}
         </ul>
       </div>
     </div>

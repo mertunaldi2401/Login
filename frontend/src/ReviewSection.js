@@ -24,6 +24,17 @@ function ReviewSection() {
     fetchReviews();
   }, [id, refresh]);
 
+  // Listen for "reviewRefresh" events (set in ProductManager after approval)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'reviewRefresh') {
+        setRefresh(prev => !prev);          // trigger re-fetch
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
   const submitReview = async () => {
     try {
       const token = localStorage.getItem('token'); // token burada çekiliyor
@@ -41,6 +52,7 @@ function ReviewSection() {
       const res = await axios.post(
         `http://localhost:5001/products/${id}/reviews`,
         {
+          productId: id,
           rating,
           comment,
           userId, // userId'yi ekliyoruz
