@@ -20,6 +20,7 @@ const authenticateToken = (req, res, next) => {
       id: decoded.id, // Burada id'yi doğru şekilde ayarlıyoruz
       username: decoded.username,
       email: decoded.email,
+      role: decoded.role // <-- add this line
     };
 
     // Log to check if user is correctly decoded

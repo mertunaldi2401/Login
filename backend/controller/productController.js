@@ -19,7 +19,15 @@
 
       const textFilter = q ? { $text: { $search: q } } : {};
       const categoryFilter = category ? { category } : {};
-      const filter = { ...textFilter, ...categoryFilter };
+      let filter = { ...textFilter, ...categoryFilter };
+
+      // Only show products with priceSetBySalesManager: true for normal users
+      if (
+        !req.user ||
+        (req.user.role !== 'product-manager' && req.user.role !== 'sales-manager')
+      ) {
+        filter.priceSetBySalesManager = true;
+      }
 
       const products = await Product.find(filter)
         .sort({ quantityInStock: -1, name: 1 })
@@ -42,7 +50,16 @@
   exports.getAllProducts = async (req, res) => {
     try {
       const { category } = req.query;
-      const filter = category ? { category } : {};
+      let filter = {};
+      if (category) filter.category = category;
+
+      // Only show products with priceSetBySalesManager: true for normal users
+      if (
+        !req.user ||
+        (req.user.role !== 'product-manager' && req.user.role !== 'sales-manager')
+      ) {
+        filter.priceSetBySalesManager = true;
+      }
 
       const products = await Product.find(filter)
         .sort({ quantityInStock: -1, name: 1 })
@@ -78,29 +95,29 @@
 
 // Create a new product (product-manager only)
 exports.createProduct = async (req, res, next) => {
-  // Role guard
   if (req.user.role !== 'product-manager') {
     return res.status(403).json({ message: 'Forbidden: insufficient role' });
   }
-  const { name, model, description, quantityInStock, price, cost, image, category, brand } = req.body;
+  const { name, model, description, quantityInStock, image, category, brand } = req.body;
+
   // Validate required fields
   if (!name || typeof name !== 'string') {
     return res.status(400).json({ message: 'Invalid or missing product name.' });
   }
-  if (typeof price !== 'number' || price < 0) {
-    return res.status(400).json({ message: 'Invalid or missing price.' });
-  }
+
+  // Don't require price, it will be set later by sales manager!
   try {
     const product = new Product({
       name,
       model,
       description,
       quantityInStock,
-      price,
-      cost: (typeof cost === 'number' && cost >= 0) ? cost : undefined,
+      price: 0, // Always 0 at creation
+      cost: 0,  // Always 0 at creation
       image,
       category,
-      brand
+      brand,
+      priceSetBySalesManager: false // Mark as not set yet
     });
     await product.save();
     res.status(201).json({ message: 'Product created.', product });

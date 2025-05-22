@@ -59,4 +59,37 @@ router.patch(
   }
 );
 
+
+// PATCH /products/:id/set-price → only sales-manager can set price and mark as priceSetBySalesManager
+router.patch(
+  '/:id/set-price',
+  authenticateToken,
+  async (req, res, next) => {
+    if (req.user.role !== 'sales-manager') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+    const { id } = req.params;
+    const { price } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+    if (typeof price !== 'number' || price < 0) {
+      return res.status(400).json({ message: 'Invalid price.' });
+    }
+    try {
+      const product = await Product.findByIdAndUpdate(
+        id,
+        { price, priceSetBySalesManager: true },
+        { new: true }
+      );
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found.' });
+      }
+      res.json({ message: 'Price updated and approved by sales manager.', product });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

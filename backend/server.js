@@ -19,6 +19,8 @@ const authenticateToken = require('./middlewares/authMiddleware');
 const { forwardToDeliveryDept } = require('./services/deliveryService');
 const productController = require('./controller/productController');
 const adminRoutes = require('./routes/adminRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
+
 
 
 const app  = express();
@@ -46,12 +48,13 @@ app.use('/admin', adminRoutes);
 app.use('/categories', categoryRoutes);
 // Delivery list endpoints
 app.use('/deliveries', deliveryRoutes);
-
+app.use('/wishlist', wishlistRoutes);
 // Base route for sanity check
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
-
+// global review admin endpoint
+app.use('/reviews', require('./routes/globalReviewRoutes'));
 // Start server
 app.listen(PORT, () => {
   console.log(`✅  Server is running on http://localhost:${PORT}`);

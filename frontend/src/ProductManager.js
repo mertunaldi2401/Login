@@ -7,8 +7,16 @@ function ProductManager() {
   const [categories, setCategories] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [newProduct, setNewProduct] = useState({ name: '', category: '', price: '', stock: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', category: '', quantityInStock: '' });
   const [error, setError] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [editingStockId, setEditingStockId] = useState(null);
+  const [newStockValue, setNewStockValue] = useState('');
+  const [productIdMap, setProductIdMap] = useState({});
+
+  const token = localStorage.getItem('token');
+  const authHeader = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     fetchProducts();
@@ -19,8 +27,11 @@ function ProductManager() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/products');
+      const res = await axios.get('http://localhost:5001/products', { headers: authHeader });
       setProducts(res.data);
+      const map = {};
+      res.data.forEach(p => { map[p.name] = p._id; });
+      setProductIdMap(map);
     } catch (err) {
       console.error('Failed to fetch products:', err);
     }
@@ -28,7 +39,7 @@ function ProductManager() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/categories');
+      const res = await axios.get('http://localhost:5001/categories', { headers: authHeader });
       setCategories(res.data);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
@@ -37,7 +48,8 @@ function ProductManager() {
 
   const fetchDeliveries = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/deliveries');
+      // use the enriched list we added in deliveryRoutes.js
+      const res = await axios.get('http://localhost:5001/deliveries/all', { headers: authHeader });
       setDeliveries(res.data);
     } catch (err) {
       console.error('Failed to fetch deliveries:', err);
@@ -46,7 +58,7 @@ function ProductManager() {
 
   const fetchReviews = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/reviews/unapproved');
+      const res = await axios.get('http://localhost:5001/reviews/unapproved', { headers: authHeader });
       setReviews(res.data);
     } catch (err) {
       console.error('Failed to fetch reviews:', err);
@@ -58,16 +70,37 @@ function ProductManager() {
     setNewProduct((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      setCategoryError("⚠️ Category name cannot be empty.");
+      return;
+    }
+    try {
+      const res = await axios.post('http://localhost:5001/categories', { name: newCategory }, { headers: authHeader });
+      setCategories([...categories, res.data.category]);
+      setNewCategory('');
+      setCategoryError('');
+    } catch (err) {
+      setCategoryError('⚠️ Failed to add category. It might already exist.');
+    }
+  };
+
   const handleAddProduct = async () => {
-    if (!newProduct.name || !newProduct.category || !newProduct.price || !newProduct.stock) {
+    if (!newProduct.name || !newProduct.category || !newProduct.quantityInStock) {
       setError("⚠️ Please fill all the fields.");
       return;
     }
 
+    // Ensure quantityInStock is a number
+    const payload = {
+      ...newProduct,
+      quantityInStock: Number(newProduct.quantityInStock),
+    };
+
     try {
-      const res = await axios.post('http://localhost:5001/products', newProduct);
-      setProducts([...products, res.data]);
-      setNewProduct({ name: '', category: '', price: '', stock: '' });
+      const res = await axios.post('http://localhost:5001/products', payload, { headers: authHeader });
+      setProducts([...products, res.data.product]);
+      setNewProduct({ name: '', category: '', quantityInStock: '' });
       setError('');
     } catch (err) {
       console.error('Failed to add product:', err);
@@ -77,16 +110,27 @@ function ProductManager() {
 
   const handleRemoveProduct = async (productId) => {
     try {
-      await axios.delete(`http://localhost:5001/products/${productId}`);
+      const token = localStorage.getItem('token'); // Assumes token is stored here
+      await axios.delete(`http://localhost:5001/products/${productId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setProducts(products.filter((product) => product._id !== productId));
     } catch (err) {
-      console.error('Failed to remove product:', err);
+      if (err.response?.status === 403) {
+        console.error('Permission denied: Not a product manager');
+      } else if (err.response?.status === 401) {
+        console.error('Unauthorized: Token missing or invalid');
+      } else {
+        console.error('Failed to remove product:', err);
+      }
     }
   };
 
   const handleApproveReview = async (reviewId) => {
     try {
-      await axios.post(`http://localhost:5001/reviews/approve/${reviewId}`);
+      await axios.post(`http://localhost:5001/reviews/approve/${reviewId}`, {}, { headers: authHeader });
       setReviews(reviews.filter((review) => review._id !== reviewId));
     } catch (err) {
       console.error('Failed to approve review:', err);
@@ -95,7 +139,7 @@ function ProductManager() {
 
   const handleDeliveryStatusUpdate = async (deliveryId) => {
     try {
-      await axios.patch(`http://localhost:5001/deliveries/${deliveryId}`, { status: 'Delivered' });
+      await axios.patch(`http://localhost:5001/deliveries/${deliveryId}`, { status: 'Delivered' }, { headers: authHeader });
       fetchDeliveries();
     } catch (err) {
       console.error('Failed to update delivery status:', err);
@@ -105,6 +149,23 @@ function ProductManager() {
   return (
     <div className="product-manager-container">
       <h1>Product Manager</h1>
+
+      <div className="category-section">
+        <h2>Categories</h2>
+        <ul>
+          {categories.map(category => (
+            <li key={category._id}>{category.name}</li>
+          ))}
+        </ul>
+        <input
+          type="text"
+          placeholder="New Category Name"
+          value={newCategory}
+          onChange={e => setNewCategory(e.target.value)}
+        />
+        <button onClick={handleAddCategory}>Add Category</button>
+        {categoryError && <p className="error-message">{categoryError}</p>}
+      </div>
 
       <div className="add-product-form">
         <h2>Add Product</h2>
@@ -123,16 +184,9 @@ function ProductManager() {
         </select>
         <input
           type="text"
-          name="price"
-          placeholder="Price"
-          value={newProduct.price}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="stock"
-          placeholder="Stock"
-          value={newProduct.stock}
+          name="quantityInStock"
+          placeholder="Quantity In Stock"
+          value={newProduct.quantityInStock}
           onChange={handleInputChange}
         />
         <button onClick={handleAddProduct}>Add Product</button>
@@ -144,8 +198,48 @@ function ProductManager() {
         <ul>
           {products.map((product) => (
             <li key={product._id}>
-              {product.name} - {product.category} - ${product.price} - Stock: {product.stock}
+              {product.name} - {product.category} - ${product.price} - Stock: {product.quantityInStock}
               <button onClick={() => handleRemoveProduct(product._id)}>Remove</button>
+              {editingStockId === product._id ? (
+                <span style={{ marginLeft: '1em' }}>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newStockValue}
+                    onChange={e => setNewStockValue(e.target.value)}
+                    style={{ width: 60 }}
+                  />
+                  <button
+                    onClick={async () => {
+                      try {
+                        await axios.patch(`http://localhost:5001/products/${product._id}/stock`,
+                          { quantityInStock: Number(newStockValue) },
+                          { headers: authHeader }
+                        );
+                        setEditingStockId(null);
+                        setNewStockValue('');
+                        fetchProducts();
+                      } catch (err) {
+                        alert('Failed to update stock');
+                      }
+                    }}
+                    style={{ marginLeft: 4 }}
+                  >
+                    Save
+                  </button>
+                  <button onClick={() => setEditingStockId(null)} style={{ marginLeft: 4 }}>Cancel</button>
+                </span>
+              ) : (
+                <button
+                  style={{ marginLeft: '1em' }}
+                  onClick={() => {
+                    setEditingStockId(product._id);
+                    setNewStockValue(product.quantityInStock);
+                  }}
+                >
+                  Update Stock
+                </button>
+              )}
             </li>
           ))}
         </ul>
@@ -153,14 +247,73 @@ function ProductManager() {
 
       <div className="delivery-list">
         <h2>Delivery List</h2>
-        <ul>
-          {deliveries.map((delivery) => (
-            <li key={delivery._id}>
-              Order ID: {delivery._id}, Total Price: ${delivery.totalPrice}, Status: {delivery.status}
-              <button onClick={() => handleDeliveryStatusUpdate(delivery._id)}>Mark as Delivered</button>
-            </li>
-          ))}
-        </ul>
+        <table>
+          <thead>
+            <tr>
+              <th>Delivery ID</th>
+              <th>Customer ID</th>
+              <th>Product ID(s)</th>
+              <th>Quantity</th>
+              <th>Total Price</th>
+              <th>Delivery Address</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {deliveries.map(delivery => {
+              // does this delivery include “Product B” ?
+              const hasProductB = delivery.items?.some(
+                item => (item.product?.name || item.product) === 'Product B'
+              );
+
+              return (
+                <tr
+                  key={delivery._id}
+                  className={hasProductB ? 'highlight-row' : undefined}
+                >
+                  <td>{delivery._id}</td>
+
+                  {/* customer id / username */}
+                  <td>{delivery.customer?.username || delivery.user}</td>
+
+                  {/* product ids or names */}
+                  <td>
+                    {delivery.items?.map(item => (
+                      <div key={item.product._id ?? item.product}>
+                        {item.product?.name || item.product}
+                      </div>
+                    ))}
+                  </td>
+
+                  {/* quantities */}
+                  <td>
+                    {delivery.items?.map(item => (
+                      <div key={item.product._id ?? item.product}>{item.quantity}</div>
+                    ))}
+                  </td>
+
+                  <td>${delivery.totalPrice?.toFixed(2)}</td>
+                  <td>{delivery.address || delivery.deliveryAddress}</td>
+
+                  {/* status */}
+                  <td>{delivery.completed || delivery.status === 'delivered'
+                        ? 'delivered'
+                        : delivery.status}</td>
+
+                  {/* action button only when not yet delivered */}
+                  <td>
+                    {delivery.completed || delivery.status === 'delivered' ? null : (
+                      <button onClick={() => handleDeliveryStatusUpdate(delivery._id)}>
+                        Mark as Delivered
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       <div className="review-list">

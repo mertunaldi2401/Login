@@ -8,11 +8,18 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // Get JWT token for wishlist operations
+  const token = localStorage.getItem('token');
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  // Wishlist state
+  const [inWishlist, setInWishlist] = useState(false);
+
+  // Fetch product details
   useEffect(() => {
     fetch(`http://localhost:5001/products/${id}`)
       .then(res => res.json())
@@ -26,16 +33,32 @@ function ProductDetail() {
       });
   }, [id]);
 
+  // Check if product is in user's wishlist
+  useEffect(() => {
+    if (!product || !token) return;
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:5001/wishlist', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const list = await res.json();
+        setInWishlist(list.some(item => item._id === product._id));
+      } catch (err) {
+        console.error('Wishlist fetch failed:', err);
+      }
+    })();
+  }, [product, token]);
+
+  // Add to cart handler
   const addToCart = async () => {
     try {
-      // build request headers: prefer JWT, otherwise fall back to a per‑browser guest id
       const headers = {};
       const token = localStorage.getItem('token');
 
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       } else {
-        // ensure we have a persistent random guest id
         let guestId = localStorage.getItem('guestId');
         if (!guestId) {
           guestId = Math.random().toString(36).substring(2);
@@ -62,6 +85,26 @@ function ProductDetail() {
     }
   };
 
+  // Toggle wishlist
+  const toggleWishlist = async () => {
+    if (!token) {
+      alert('Please log in to manage your wishlist.');
+      return;
+    }
+    try {
+      const method = inWishlist ? 'DELETE' : 'POST';
+      const res = await fetch(`http://localhost:5001/wishlist/${product._id}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Wishlist güncellenemedi');
+      setInWishlist(!inWishlist);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Styles omitted for brevity (unchanged)
   const detailContainerStyle = { padding: '2rem', color: '#fff', backgroundColor: '#000', minHeight: '100vh' };
   const contentStyle = { display: 'flex', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' };
   const imageStyle = { width: '400px', height: 'auto', borderRadius: '6px' };
@@ -117,7 +160,7 @@ function ProductDetail() {
               <select
                 style={selectStyle}
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value))}
+                onChange={e => setQuantity(parseInt(e.target.value))}
               >
                 {[...Array(Math.min(product.quantityInStock, 10)).keys()].map(x => (
                   <option key={x + 1} value={x + 1}>
@@ -143,6 +186,24 @@ function ProductDetail() {
                   Out of Stock
                 </span>
               )}
+
+              {/* Wishlist Button */}
+              <button
+                onClick={toggleWishlist}
+                style={{
+                  background: inWishlist ? '#c0392b' : '#27ae60',
+                  color: '#fff',
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  marginRight: '1rem'
+                }}
+              >
+                {inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+              </button>
 
               <button style={backButtonStyle} onClick={() => navigate(-1)}>
                 Go Back

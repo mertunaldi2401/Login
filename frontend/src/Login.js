@@ -29,8 +29,7 @@ function Login() {
 
       const data = await res.json();
       if (res.ok) {
-        login(identifier, data.token);
-        localStorage.setItem('token', data.token);  // ✅ BURAYI EKLEDİK
+        login(data.token);
         localStorage.removeItem('guestId');
         navigate('/');
       } else {

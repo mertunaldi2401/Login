@@ -5,6 +5,8 @@ const Product = require('../models/Product');
 
 // POST /categories
 exports.createCategory = async (req, res, next) => {
+
+  console.log('req.user:', req.user);
   if (req.user.role !== 'product-manager') {
     return res.status(403).json({ message: 'Forbidden: insufficient role' });
   }
@@ -21,6 +23,16 @@ exports.createCategory = async (req, res, next) => {
     }
     const category = await Category.create({ name });
     res.status(201).json({ message: 'Category created.', category });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// controller/categoryController.js
+exports.getAllCategories = async (req, res, next) => {
+  try {
+    const categories = await Category.find({});
+    res.json(categories);
   } catch (err) {
     next(err);
   }

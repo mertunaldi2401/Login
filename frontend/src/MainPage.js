@@ -92,6 +92,11 @@ function MainPage({ searchQuery }) {
           {(auth.token || localStorage.getItem('guestId')) && (
             <Link to="/cart">
               <button style={cartButtonStyle}>Go to Cart</button>
+            </Link> 
+          )}
+          {typeof auth.user === 'string' && auth.user.startsWith('product-manager') && (
+            <Link to="/productmanager">
+              <button style={cartButtonStyle}>Product Manager Panel</button>
             </Link>
           )}
         </div>

@@ -1,16 +1,39 @@
 const Delivery = require('../models/Delivery');
 
 // GET /deliveries → list everything
-exports.listDeliveries = async (req, res, next) => {
-  if (req.user.role !== 'product-manager') {
+const listAllDeliveries = async (req, res, next) => {
+  if (
+    req.user.role !== 'product-manager' &&
+    req.user.role !== 'sales-manager'
+  ) {
     return res.status(403).json({ message: 'Forbidden' });
   }
   const deliveries = await Delivery.find()
-    .populate('customer', 'username email')
-    .populate('product', 'name')
+    .populate('customer', 'username email _id')
+    .populate('product', 'name _id')
     .lean();
-  res.json(deliveries);
+
+  // Return a flattened array with desired fields
+  const formatted = deliveries.map(d => ({
+    deliveryId: d._id,
+    customerId: d.customer?._id,
+    customerName: d.customer?.username,
+    productId: d.product?._id,
+    productName: d.product?.name,
+    quantity: d.quantity,
+    totalPrice: d.totalPrice,
+    address: d.address,
+    completed: d.completed,
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt
+  }));
+
+  res.json(formatted);
 };
+
+exports.listAllDeliveries = listAllDeliveries;
+// Alias for backwards compatibility
+exports.listDeliveries = listAllDeliveries;
 
 // (Optional) PATCH /deliveries/:id/complete → mark as completed
 exports.markComplete = async (req, res, next) => {
