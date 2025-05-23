@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import jsPDF from 'jspdf';
 import Chart from 'chart.js/auto';
+// Base URL for backend API
+const baseUrl = 'http://localhost:5001';
+
 import './SalesManager.css'; // ✅ Import CSS
 import { AuthContext } from './AuthContext';
 
@@ -94,7 +97,7 @@ function SalesManager() {
   };
 
   const fetchInvoices = async () => {
-    const res = await fetch(`/api/salesmanager/invoices?start=${startDate}&end=${endDate}`, {
+    const res = await fetch(`${baseUrl}/api/salesmanager/invoices?start=${startDate}&end=${endDate}`, {
       headers: authHeader
     });
     const data = await res.json();
@@ -108,7 +111,7 @@ function SalesManager() {
   };
 
   const calculateRevenue = async () => {
-    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, {
+    const res = await fetch(`${baseUrl}/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, {
       headers: authHeader
     });
     const data = await res.json();
@@ -233,7 +236,11 @@ function SalesManager() {
         <button onClick={fetchInvoices}>Load Invoices</button>
         <button onClick={exportPDF}>Save as PDF</button>
         <ul>
-          {invoices.map(inv => <li key={inv.id}>Invoice #{inv.id} - ${inv.total}</li>)}
+          {invoices.map(inv => (
+            <li key={inv._id}>
+              Invoice #{inv._id.slice(-6)} - {new Date(inv.createdAt).toLocaleDateString()} - ${inv.totalPrice.toFixed(2)}
+            </li>
+          ))}
         </ul>
       </div>
 
