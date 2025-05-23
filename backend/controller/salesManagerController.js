@@ -1,5 +1,8 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const RefundRequest = require('../models/RefundRequest');
+const User = require('../models/User');
+const Invoice = require('../models/Invoice');
 
 // POST /api/salesmanager/apply-discount
 exports.applyDiscount = async (req, res) => {
@@ -39,56 +42,45 @@ exports.applyDiscount = async (req, res) => {
 
 // GET /api/salesmanager/invoices?start=YYYY-MM-DD&end=YYYY-MM-DD
 exports.getInvoicesByDate = async (req, res) => {
-    try {
-      if (!req.user || req.user.role !== 'sales-manager') {
-        return res.status(403).json({ message: 'Forbidden: Only sales managers can view invoices.' });
-      }
-      const { start, end } = req.query;
-      if (!start || !end) {
-        return res.status(400).json({ message: 'Start and end date required.' });
-      }
-      const startDate = new Date(start);
-      const endDate = new Date(end);
-      if (isNaN(startDate) || isNaN(endDate)) {
-        return res.status(400).json({ message: 'Invalid date format.' });
-      }
-
-      // Query orders within range
-      const orders = await Order.find({
-        createdAt: { $gte: startDate, $lte: endDate }
-      }).sort({ createdAt: -1 });
-
-      // Map orders to frontend shape (id, totalPrice, createdAt, status, items)
-      const orderList = orders.map(order => ({
-        id: order._id,
-        totalPrice: order.totalPrice || 0,
-        createdAt: order.createdAt,
-        status: order.status,
-        items: order.items // include items if needed
-      }));
-
-      // Log to help debugging in console
-      console.log("Orders returned:", orderList);
-
-      res.json(orderList);
-    } catch (err) {
-      console.error('Order fetch error:', err);
-      res.status(500).json({ message: 'Server error.' });
+  try {
+    if (!req.user || req.user.role !== 'sales-manager') {
+      return res.status(403).json({ message: 'Forbidden: Only sales managers can view invoices.' });
     }
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: 'Start and end date required.' });
+    }
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate)) {
+      return res.status(400).json({ message: 'Invalid date format.' });
+    }
+
+    const invoices = await Invoice.find({
+      createdAt: { $gte: startDate, $lte: endDate },
+      status: { $ne: 'cancelled' }
+    }).sort({ createdAt: -1 }).populate('customer');
+
+    const result = invoices.map(inv => ({
+      _id: inv._id,
+      createdAt: inv.createdAt,
+      total: inv.total,
+      customer: inv.customer,
+      items: inv.items || []
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error('Order fetch error:', err);
+    res.status(500).json({ message: 'Server error.' });
+  }
 };
 
-// --- Refund Requests Section ---
-
-const RefundRequest = require('../models/RefundRequest');
-const User = require('../models/User');
-
-// Show all pending refund requests (optionally filter for Product F)
 exports.getRefundRequests = async (req, res) => {
   if (!req.user || req.user.role !== 'sales-manager') {
     return res.status(403).json({ message: 'Forbidden: Only sales managers can view refund requests.' });
   }
   try {
-    // To filter for Product F only, add { product: "<Product_F_ID>" } inside the query below
     const refunds = await RefundRequest.find({ status: 'pending' })
       .populate('product')
       .populate('customer');
@@ -98,7 +90,6 @@ exports.getRefundRequests = async (req, res) => {
   }
 };
 
-// Approve a refund request, update stock, notify customer
 exports.approveRefund = async (req, res) => {
   if (!req.user || req.user.role !== 'sales-manager') {
     return res.status(403).json({ message: 'Forbidden: Only sales managers can approve refunds.' });
@@ -111,12 +102,10 @@ exports.approveRefund = async (req, res) => {
     refund.status = 'approved';
     await refund.save();
 
-    // Update product stock
     const product = refund.product;
-    product.quantityInStock += 1; // Adjust if 1 unit per refund
+    product.quantityInStock += 1;
     await product.save();
 
-    // Notify customer (add notification object)
     const customer = refund.customer;
     customer.notifications = customer.notifications || [];
     customer.notifications.push({
@@ -135,12 +124,10 @@ exports.approveRefund = async (req, res) => {
 
 exports.getRevenueChartData = async (req, res) => {
   try {
-    // Parse date range from query parameters, fallback to this month if not provided
     const { start, end } = req.query;
     const startDate = start ? new Date(start) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const endDate = end ? new Date(end) : new Date();
 
-    // Aggregate invoices in date range
     const invoices = await Invoice.find({
       createdAt: {
         $gte: startDate,
@@ -149,7 +136,6 @@ exports.getRevenueChartData = async (req, res) => {
       status: { $ne: 'cancelled' }
     });
 
-    // Organize by date (YYYY-MM-DD)
     const daily = {};
 
     invoices.forEach(inv => {
@@ -163,7 +149,6 @@ exports.getRevenueChartData = async (req, res) => {
       daily[d].profit += (inv.total - totalCost);
     });
 
-    // Format result
     const result = Object.entries(daily).map(([date, data]) => ({
       date,
       revenue: Number(data.revenue.toFixed(2)),

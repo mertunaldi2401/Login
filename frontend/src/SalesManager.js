@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import jsPDF from 'jspdf';
 import Chart from 'chart.js/auto';
-import './SalesManager.css'; // ✅ Import CSS
+import './SalesManager.css';
 import { AuthContext } from './AuthContext';
 
 function SalesManager() {
@@ -24,35 +24,29 @@ function SalesManager() {
   useEffect(() => {
     const fetchUnpriced = async () => {
       try {
-        const res = await fetch('http://localhost:5001/products/unpriced', {
-          headers: authHeader
-        });
+        const res = await fetch('http://localhost:5001/products/unpriced', { headers: authHeader });
         const unpriced = await res.json();
         setUnpricedProducts(unpriced);
-      } catch (err) {
-        console.error('Failed to fetch unpriced products:', err);
+      } catch {
         setUnpricedProducts([]);
       }
     };
-    fetchUnpriced();
 
     const fetchRefunds = async () => {
       try {
         const res = await fetch('http://localhost:5001/api/salesmanager/refund-requests', { headers: authHeader });
         const data = await res.json();
         setRefunds(data);
-      } catch (err) {
+      } catch {
         setRefunds([]);
       }
     };
-    fetchRefunds();
 
     const fetchAllProducts = async () => {
       try {
         const res = await fetch('http://localhost:5001/products', { headers: authHeader });
         const data = await res.json();
         setProducts(data);
-
         const initialDiscounts = {};
         data.forEach(p => {
           initialDiscounts[p._id] = p.discountPercentage || '';
@@ -62,6 +56,9 @@ function SalesManager() {
         console.error('Error fetching products:', err);
       }
     };
+
+    fetchUnpriced();
+    fetchRefunds();
     fetchAllProducts();
   }, []);
 
@@ -94,23 +91,57 @@ function SalesManager() {
   };
 
   const fetchInvoices = async () => {
-    const res = await fetch(`/api/salesmanager/invoices?start=${startDate}&end=${endDate}`, {
-      headers: authHeader
-    });
-    const data = await res.json();
-    setInvoices(data);
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5001/api/invoices?start=${startDate}&end=${endDate}`, {
+        headers: authHeader
+      });
+      const data = await res.json();
+      setInvoices(data);
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      alert("Failed to load invoices.");
+    }
   };
 
   const exportPDF = () => {
+    if (!invoices.length) {
+      alert("No invoices loaded to export.");
+      return;
+    }
+
     const doc = new jsPDF();
-    invoices.forEach((inv, i) => doc.text(`${i + 1}. ${inv.id} - $${inv.total}`, 10, 10 + i * 10));
-    doc.save('invoices.pdf');
+    let y = 10;
+
+    doc.setFontSize(16);
+    doc.text("Invoices Report", 10, y);
+    y += 10;
+
+    invoices.forEach((inv, i) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 10;
+      }
+
+      doc.setFontSize(12);
+      doc.text(`Invoice ${i + 1}`, 10, y);
+      doc.text(`ID: ${inv._id}`, 10, y + 7);
+      doc.text(`User: ${inv.customer?.username || 'N/A'} (${inv.customer?.email || ''})`, 10, y + 14);
+      doc.text(`Date: ${new Date(inv.createdAt).toLocaleString()}`, 10, y + 21);
+      doc.text(`Total: $${inv.total?.toFixed(2)}`, 10, y + 28);
+
+      y += 40;
+    });
+
+    doc.save(`invoices_${startDate}_to_${endDate}.pdf`);
   };
 
   const calculateRevenue = async () => {
-    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, {
-      headers: authHeader
-    });
+    const res = await fetch(`/api/salesmanager/revenue?start=${startDate}&end=${endDate}`, { headers: authHeader });
     const data = await res.json();
     setRevenueData(data);
 
@@ -233,7 +264,9 @@ function SalesManager() {
         <button onClick={fetchInvoices}>Load Invoices</button>
         <button onClick={exportPDF}>Save as PDF</button>
         <ul>
-          {invoices.map(inv => <li key={inv.id}>Invoice #{inv.id} - ${inv.total}</li>)}
+          {invoices.map(inv => (
+            <li key={inv._id}>Invoice #{inv._id} - ${inv.total}</li>
+          ))}
         </ul>
       </div>
 
