@@ -1,12 +1,17 @@
+/* Main container */
 .sales-manager-container {
-  padding: 2rem;
+  padding: 1rem;
   background-color: #111;
   color: #fff;
   font-family: "Metal Mania", cursive;
-  min-height: 100vh;
 }
 
-.sales-manager-container h2, 
+/* Tighten up spacing between main sections */
+.sales-manager-container > div {
+  margin-top: 1rem;
+}
+
+.sales-manager-container h2,
 .sales-manager-container h3 {
   text-align: center;
   margin-bottom: 1rem;
@@ -30,8 +35,8 @@
   color: #fff;
   font-weight: bold;
   cursor: pointer;
-  margin-right: 1rem;
-  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sales-manager-container button:hover {
@@ -45,7 +50,21 @@
 
 .sales-manager-container li {
   background-color: #222;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   padding: 0.75rem;
   border-radius: 4px;
+}
+
+/* cap the chart to a reasonable height, with full width */
+.revenue-chart-container {
+  position: relative;
+  width: 100%;      /* take full width of its parent */
+  max-width: 600px; /* optional cap */
+  height: 300px;    /* chart height */
+  margin: 1rem auto;
+}
+.revenue-chart-container canvas {
+  /* make the canvas fill that box */
+  width: 100% !important;
+  height: 100% !important;
 }

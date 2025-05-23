@@ -60,7 +60,7 @@ exports.getInvoicesByDate = async (req, res) => {
 
       // Map orders to frontend shape (id, totalPrice, createdAt, status, items)
       const orderList = orders.map(order => ({
-        id: order._id,
+        _id: order._id,
         totalPrice: order.totalPrice || 0,
         createdAt: order.createdAt,
         status: order.status,
@@ -81,6 +81,7 @@ exports.getInvoicesByDate = async (req, res) => {
 
 const RefundRequest = require('../models/RefundRequest');
 const User = require('../models/User');
+const Invoice = require('../models/Invoice');
 
 // Show all pending refund requests (optionally filter for Product F)
 exports.getRefundRequests = async (req, res) => {
@@ -133,44 +134,55 @@ exports.approveRefund = async (req, res) => {
   }
 };
 
+// GET /api/salesmanager/revenue?start=YYYY-MM-DD&end=YYYY-MM-DD
 exports.getRevenueChartData = async (req, res) => {
+  // Restrict to sales managers
+  if (!req.user || req.user.role !== 'sales-manager') {
+    return res.status(403).json({ message: 'Forbidden: Only sales managers can view revenue.' });
+  }
   try {
-    // Parse date range from query parameters, fallback to this month if not provided
     const { start, end } = req.query;
     const startDate = start ? new Date(start) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const endDate = end ? new Date(end) : new Date();
+    const endDate   = end   ? new Date(end)   : new Date();
 
-    // Aggregate invoices in date range
-    const invoices = await Invoice.find({
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate,
+    // Aggregate orders by day
+    const results = await Order.aggregate([
+      { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.product",
+          foreignField: "_id",
+          as: "prod"
+        }
       },
-      status: { $ne: 'cancelled' }
-    });
+      { $unwind: "$prod" },
+      {
+        $project: {
+          date:    { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $multiply: ["$products.price", "$products.quantity"] },
+          cost:    { $multiply: ["$prod.costPrice", "$products.quantity"] }
+        }
+      },
+      {
+        $group: {
+          _id: "$date",
+          revenue: { $sum: "$revenue" },
+          cost:    { $sum: "$cost" }
+        }
+      },
+      {
+        $project: {
+          date:   "$_id",
+          revenue: 1,
+          profit: { $subtract: ["$revenue", "$cost"] }
+        }
+      },
+      { $sort: { date: 1 } }
+    ]);
 
-    // Organize by date (YYYY-MM-DD)
-    const daily = {};
-
-    invoices.forEach(inv => {
-      const d = inv.createdAt.toISOString().substring(0, 10);
-      if (!daily[d]) daily[d] = { revenue: 0, profit: 0 };
-      let totalCost = 0;
-      inv.items.forEach(item => {
-        totalCost += (item.cost || 0) * item.quantity;
-      });
-      daily[d].revenue += inv.total;
-      daily[d].profit += (inv.total - totalCost);
-    });
-
-    // Format result
-    const result = Object.entries(daily).map(([date, data]) => ({
-      date,
-      revenue: Number(data.revenue.toFixed(2)),
-      profit: Number(data.profit.toFixed(2))
-    })).sort((a, b) => a.date.localeCompare(b.date));
-
-    res.json(result);
+    res.json(results);
   } catch (err) {
     console.error('Error generating revenue/profit chart:', err);
     res.status(500).json({ error: 'Server error generating chart.' });

@@ -246,8 +246,10 @@ function SalesManager() {
 
       <div style={{ marginTop: '2rem' }}>
         <h3>Revenue & Profit</h3>
-        <button onClick={calculateRevenue}>Calculate</button>
-        <canvas id="revenueChart" width="600" height="300"></canvas>
+       <button onClick={calculateRevenue}>Calculate</button>
+       <div className="revenue-chart-container">
+      <canvas id="revenueChart"></canvas>
+     </div>
       </div>
 
       <div style={{ marginTop: '2rem' }}>
